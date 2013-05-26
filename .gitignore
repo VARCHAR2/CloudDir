@@ -1,0 +1,10 @@
+*.class
+.classpath
+.project
+
+bin/*
+
+# Package Files #
+*.jar
+*.war
+*.ear
