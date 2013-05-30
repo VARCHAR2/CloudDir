@@ -5,19 +5,21 @@ import java.util.Date;
 
 public class SharedFile extends AbstractFileInfo{
 
-	private long md4sum;
+	private String md4sum;
 	private long size;
 	
-	public SharedFile(Path relativePath, Date modified, User lastModifiedBy) {
+	public SharedFile(String relativePath, long modified, User lastModifiedBy, String md4sum, long size) {
 		super(relativePath, modified, lastModifiedBy);
 		// TODO Auto-generated constructor stub
+		this.md4sum = md4sum;
+		this.size = size;
 	}
 
-	public long getMd4sum() {
+	public String getMd4sum() {
 		return md4sum;
 	}
 
-	public void setMd4sum(long md4sum) {
+	public void setMd4sum(String md4sum) {
 		this.md4sum = md4sum;
 	}
 
@@ -29,5 +31,9 @@ public class SharedFile extends AbstractFileInfo{
 		this.size = size;
 	}
 	
+	@Override
+	public String toString() {
+		return "File:\nMD4SUM: " + md4sum + "\nSize: " + size + "\n" + super.toString() + "\n";
+	}
 	
 }

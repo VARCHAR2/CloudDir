@@ -4,12 +4,12 @@ import java.nio.file.Path;
 import java.util.Date;
 
 public abstract class AbstractFileInfo {
-	private Path relativePath;
-	private Date modified;
+	private String relativePath;
+	private long modified;
 	private User lastModifiedBy;
 	
 	
-	public AbstractFileInfo(Path relativePath, Date modified,
+	public AbstractFileInfo(String relativePath, long modified,
 			User lastModifiedBy) {
 		super();
 		this.relativePath = relativePath;
@@ -17,19 +17,19 @@ public abstract class AbstractFileInfo {
 		this.lastModifiedBy = lastModifiedBy;
 	}
 
-	public Path getRelativePath() {
+	public String getRelativePath() {
 		return relativePath;
 	}
 	
-	public void setRelativePath(Path relativePath) {
+	public void setRelativePath(String relativePath) {
 		this.relativePath = relativePath;
 	}
 	
-	public Date getModified() {
+	public long getModified() {
 		return modified;
 	}
 	
-	public void setModified(Date modified) {
+	public void setModified(long modified) {
 		this.modified = modified;
 	}
 	
@@ -39,6 +39,11 @@ public abstract class AbstractFileInfo {
 	
 	public void setLastModifiedBy(User lastModifiedBy) {
 		this.lastModifiedBy = lastModifiedBy;
+	}
+	
+	@Override
+	public String toString() {
+		return "Relative path: " + relativePath + "\nModified: " + modified + "\nBy: " + lastModifiedBy.toString();
 	}
 	
 }
