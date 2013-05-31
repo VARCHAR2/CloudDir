@@ -5,7 +5,6 @@ import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -45,9 +44,9 @@ public class ServerController {
         USER_GROUPS.add(group);
 
         USERS = new ArrayList<>();
-        USERS.add(new User("Michał", false, group));
-        USERS.add(new User("Богдан", false, group));
-        USERS.add(new User("Łukasz", false, group));
+        USERS.add(new User("Michał", false, group, "12345678"));
+        USERS.add(new User("Богдан", false, group, "10101010"));
+        USERS.add(new User("Łukasz", false, group, "qwertyuiop"));
     }
 
 

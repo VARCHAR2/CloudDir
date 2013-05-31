@@ -96,10 +96,10 @@ public class LocalFileChangedListener implements Runnable {
 	}
 
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
-		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), new User("bogdan", false, null));
+		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), new User("bogdan", false, null, "10101010"));
 	}
 
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
-		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), new User("bogdan", false, null), HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace());
+		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), new User("bogdan", false, null, "10101010"), HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace());
 	}
 }

@@ -5,15 +5,17 @@ import java.io.Serializable;
 public class User implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private String name;
+    private String password;
 	private boolean loggedIn;
 	private UserGroup userGroup;
 	
 	
-	public User(String name, boolean loggedIn, UserGroup userGroup) {
+	public User(String name, boolean loggedIn, UserGroup userGroup, String password) {
 		super();
 		this.name = name;
 		this.loggedIn = loggedIn;
-		this.setUserGroup(userGroup);
+        this.password = password;
+        this.setUserGroup(userGroup);
 	}
 
 	public String getName() {
@@ -39,5 +41,12 @@ public class User implements Serializable{
 	public void setUserGroup(UserGroup userGroup) {
 		this.userGroup = userGroup;
 	}
-	
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
