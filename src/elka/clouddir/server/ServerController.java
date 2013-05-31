@@ -1,12 +1,14 @@
 package elka.clouddir.server;
 
 import elka.clouddir.server.communication.ClientCommunicationThread;
-import elka.clouddir.server.serverevents.ClientConnectEvent;
-import elka.clouddir.server.serverevents.ServerEvent;
+import elka.clouddir.server.serverevents.*;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -21,6 +23,8 @@ public class ServerController {
     private BlockingQueue<ServerEvent> serverEventQueue;
 
     private ConnectionReceiver connectionReceiver;
+
+    private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
 
 
     boolean         running;
@@ -40,6 +44,8 @@ public class ServerController {
 //    }
 
     public ServerController() throws IOException {
+
+        initProcMap();
 
         serverEventQueue = new LinkedBlockingQueue<>();
 
@@ -65,15 +71,13 @@ public class ServerController {
             try {
                 ServerEvent event = serverEventQueue.take();
 
-                if(event.getClass() == ClientConnectEvent.class) {
-                    connectClient(((ClientConnectEvent)event).getClientSocket());
-                }
-
-
+                procMap.get(event.getClass()).process(event);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -85,8 +89,30 @@ public class ServerController {
      * @throws IOException
      */
     private void connectClient(Socket clientSocket) throws IOException{
-            threads[threads.length] = new ClientCommunicationThread(clientSocket);
+            threads[threads.length] = new ClientCommunicationThread(clientSocket, serverEventQueue);
             threads[threads.length - 1].start();
+    }
+
+    private void initProcMap() {
+        procMap = new HashMap<>();
+        procMap.put(ClientConnectEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws IOException {
+                connectClient(((ClientConnectEvent)event).getClientSocket());
+            }
+        });
+        procMap.put(LoginRequestEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) {
+                //TODO
+            }
+        });
+        procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) {
+                //TODO
+            }
+        });
     }
 
 

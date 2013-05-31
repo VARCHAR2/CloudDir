@@ -1,5 +1,9 @@
 package elka.clouddir.server.communication;
 
+import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.server.serverevents.FileChangedEvent;
+import elka.clouddir.server.serverevents.LoginRequestEvent;
+import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.TransmissionEnd;
 
@@ -10,6 +14,7 @@ import java.io.Serializable;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Wątek odpowiadający za komunikację z klientem
@@ -17,16 +22,21 @@ import java.util.Map;
  */
 public class ClientCommunicationThread extends Thread
 {
-    ObjectOutputStream  out;
-    ObjectInputStream   in;
-    boolean             running;
+    private final   ObjectOutputStream  out;
+    private final   ObjectInputStream   in;
+
+    private final BlockingQueue<ServerEvent> serverEventQueue;
+
+    private         boolean             running;
+
 
 //    static Map<Message, MessageProcesser> processerMap;
 //    static {
 //        initMap();
 //    }
 
-    public ClientCommunicationThread(Socket clientSocket) throws IOException {
+    public ClientCommunicationThread(Socket clientSocket, BlockingQueue<ServerEvent> serverEventQueue) throws IOException {
+        this.serverEventQueue = serverEventQueue;
         out = new ObjectOutputStream(clientSocket.getOutputStream());
         in = new ObjectInputStream(clientSocket.getInputStream());
     }
@@ -38,11 +48,15 @@ public class ClientCommunicationThread extends Thread
         while (running) {
             try {
                 Message message = (Message)in.readObject();
-//                processAdditionalData(message);
-                //tu jakoś trzeba dodatkowe informacje pobrać
-//                .get(message).process();
+
+                //pobranie dodatkowych danych
+                ServerEvent event = processMessage(message);
+
                 //to po to, aby sprawdzić, że poprawnie zakończono transmisję
                 TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
+
+                //ok - wyślij do serwera
+                serverEventQueue.put(event);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -60,6 +74,20 @@ public class ClientCommunicationThread extends Thread
         out.writeObject(object);
     }
 
+
+    private ServerEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
+        switch (message) {
+            case LOGIN_REQUEST:
+                String username = (String) in.readObject();
+                String password = (String) in.readObject();
+                return new LoginRequestEvent(username, password);
+            case FILE_CHANGED:
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                return new FileChangedEvent(metadata);
+            default:
+                throw new UnsupportedOperationException("Operation not implemented");
+        }
+    }
 
 
 }
