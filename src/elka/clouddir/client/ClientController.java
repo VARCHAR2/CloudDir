@@ -19,6 +19,9 @@ import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 
+/**
+ * Kontroler klienta
+ */
 public class ClientController {
 
 	/**

@@ -1,13 +1,21 @@
 package elka.clouddir.server;
 
+<<<<<<< HEAD
+=======
+import elka.clouddir.server.communication.ClientCommunicationThread;
+import elka.clouddir.server.model.User;
+import elka.clouddir.server.model.UserGroup;
+import elka.clouddir.server.serverevents.*;
+
+>>>>>>> 07ae364df3d29eb64bd9b465ffe6e72da0fa8d9b
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+<<<<<<< HEAD
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.serverevents.ClientConnectEvent;
 import elka.clouddir.server.serverevents.FileChangedEvent;
@@ -15,11 +23,17 @@ import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
 
+=======
+/**
+ * Kontroler serwera
+ * @author Michał Toporowski
+ */
+>>>>>>> 07ae364df3d29eb64bd9b465ffe6e72da0fa8d9b
 public class ServerController {
 
     private static final int PORT = 3333;
 
-    private ClientCommunicationThread threads[];
+    private List<ClientCommunicationThread> threads;
 //    int             size;
     private ServerSocket serverSocket;
 
@@ -30,6 +44,24 @@ public class ServerController {
     private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
 
     private int MAX_CLIENTS = 10;
+
+    private static List<User> USERS;
+    private static List<UserGroup> USER_GROUPS;
+
+    private List<User> users = USERS;
+    private List<UserGroup> userGroups = USER_GROUPS;
+
+    static {
+        USER_GROUPS = new ArrayList<>();
+        UserGroup group = new UserGroup("Ludziska", "folderLudzisk");
+        USER_GROUPS.add(group);
+
+        USERS = new ArrayList<>();
+        USERS.add(new User("Michał", false, group, "12345678"));
+        USERS.add(new User("Богдан", false, group, "10101010"));
+        USERS.add(new User("Łukasz", false, group, "qwertyuiop"));
+    }
+
 
     boolean         running;
 //
@@ -50,9 +82,13 @@ public class ServerController {
     public ServerController() throws IOException {
 
         initProcMap();
-        threads = new ClientCommunicationThread[MAX_CLIENTS];
 
         serverEventQueue = new LinkedBlockingQueue<>();
+
+        threads = new LinkedList<>();
+
+
+        connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
 
         serverSocket = new ServerSocket(PORT);
         connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
@@ -94,9 +130,10 @@ public class ServerController {
      * @param clientSocket
      * @throws IOException
      */
-    private void connectClient(Socket clientSocket) throws IOException {
-            threads[threads.length - 1] = new ClientCommunicationThread(clientSocket, serverEventQueue);
-            threads[threads.length - 1].start();
+    private void connectClient(Socket clientSocket) throws IOException{
+            ClientCommunicationThread newThread = new ClientCommunicationThread(clientSocket, serverEventQueue);
+            threads.add(newThread);
+            newThread.start();
     }
 
     private void initProcMap() {
