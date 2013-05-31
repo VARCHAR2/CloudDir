@@ -1,6 +1,8 @@
 package elka.clouddir.client;
 
 import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
+import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
@@ -71,19 +73,22 @@ public class ServerCommunicationThread extends Thread {
 
     }
 
-
-    public void sendObject(final Object object) throws IOException {
-        out.writeObject(object);
-        out.flush();
-    }
-    
-    public void sendFile(final Serializable file) throws IOException {
+    public void sendObject(final Serializable file) throws IOException {
         out.writeObject(file);
         out.flush();
     }
 
     private ClientEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
-    	return null;
+    	
+    	switch (message) {
+			case LOGIN_OK:
+				return new LoginAcceptedEvent();
+			case LOGIN_FAILED:
+				return new LoginRejectedEvent();
+			default:
+				throw new UnsupportedOperationException("Operation not implemented");
+    	}
+    	
     }
 
 	public void sendMessage(Message message) throws IOException {

@@ -3,13 +3,19 @@ package elka.clouddir.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
+import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.client.clientEvents.LoginRequestEvent;
+import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 
@@ -44,26 +50,14 @@ public class ClientController {
 			System.exit(0);
 		}
 		
-		/*
-		try {
-			List<AbstractFileInfo> metadataArray = localFileSystemListener.getSystemMetadata();
-			for (AbstractFileInfo abstractFileInfo : metadataArray) {
-				System.out.println(abstractFileInfo.toString());
-			}
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		
 	}
 
 	private void initStrategyMap() {
 		strategyMap = new HashMap<Class<? extends ClientEvent>, ClientController.Strategy>();
 		
 		strategyMap.put(LoginRequestEvent.class, new LoginRequestStrategy());
+		strategyMap.put(LoginAcceptedEvent.class, new LoginAcceptedStrategy());
+		strategyMap.put(LoginRejectedEvent.class, new LoginRejectedStrategy());
 		
 	}
 
@@ -102,6 +96,7 @@ public class ClientController {
 			    String password = bufferRead.readLine();
 			    serverCommunicationThread.sendMessage(Message.LOGIN_REQUEST);
 			    serverCommunicationThread.sendObject(new LoginInfo(login, password));
+//			    clientEventQueue.add(new LoginAcceptedEvent());
 //			    serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
 			}
 			catch(IOException e)
@@ -111,6 +106,39 @@ public class ClientController {
 			
 		}
 
+	}
+	
+	class LoginAcceptedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			try {
+				List<AbstractFileInfo> metadataArray = localFileSystemListener.getSystemMetadata();
+				FilesMetadata filesMetadata = new FilesMetadata(metadataArray.toArray(new AbstractFileInfo[0]));
+				serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
+				serverCommunicationThread.sendObject(filesMetadata);
+//				for (AbstractFileInfo abstractFileInfo : abstractFileInfos) {
+//					System.out.println(abstractFileInfo.toString());
+//				}
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	class LoginRejectedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			System.out.println("Login was rejected");
+			clientEventQueue.add(new LoginRequestEvent());
+		}
+		
 	}
 	
 	public static void main(String[] args) {
