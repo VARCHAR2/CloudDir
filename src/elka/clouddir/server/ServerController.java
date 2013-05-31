@@ -1,13 +1,11 @@
 package elka.clouddir.server;
 
-<<<<<<< HEAD
-=======
+
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
 
->>>>>>> 07ae364df3d29eb64bd9b465ffe6e72da0fa8d9b
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-<<<<<<< HEAD
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.serverevents.ClientConnectEvent;
 import elka.clouddir.server.serverevents.FileChangedEvent;
@@ -23,12 +20,10 @@ import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
 
-=======
 /**
  * Kontroler serwera
  * @author Michał Toporowski
  */
->>>>>>> 07ae364df3d29eb64bd9b465ffe6e72da0fa8d9b
 public class ServerController {
 
     private static final int PORT = 3333;
