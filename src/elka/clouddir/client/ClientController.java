@@ -13,6 +13,9 @@ import elka.clouddir.client.clientEvents.LoginRequestEvent;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 
+/**
+ * Kontroler klienta
+ */
 public class ClientController {
 
 	/**

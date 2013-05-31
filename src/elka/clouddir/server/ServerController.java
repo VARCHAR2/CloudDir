@@ -1,19 +1,22 @@
 package elka.clouddir.server;
 
 import elka.clouddir.server.communication.ClientCommunicationThread;
+import elka.clouddir.server.model.User;
+import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Kontroler serwera
+ * @author Michał Toporowski
+ */
 public class ServerController {
 
     private static final int PORT = 3333;
@@ -29,6 +32,24 @@ public class ServerController {
     private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
 
     private int MAX_CLIENTS = 10;
+
+    private static List<User> USERS;
+    private static List<UserGroup> USER_GROUPS;
+
+    private List<User> users = USERS;
+    private List<UserGroup> userGroups = USER_GROUPS;
+
+    static {
+        USER_GROUPS = new ArrayList<>();
+        UserGroup group = new UserGroup("Ludziska", "folderLudzisk");
+        USER_GROUPS.add(group);
+
+        USERS = new ArrayList<>();
+        USERS.add(new User("Michał", false, group));
+        USERS.add(new User("Богдан", false, group));
+        USERS.add(new User("Łukasz", false, group));
+    }
+
 
     boolean         running;
 //
