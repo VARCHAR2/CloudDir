@@ -84,7 +84,7 @@ public class ClientCommunicationThread extends Thread
                 LoginInfo loginInfo = (LoginInfo) in.readObject();
 //                String password = (String) in.readObject();
                 System.out.println("LOGIN_REQUEST transmitted");
-                return new LoginRequestEvent(loginInfo.getLogin(), loginInfo.getPassword());
+                return new LoginRequestEvent(loginInfo);
             case FILE_CHANGED:
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
                 return new FileChangedEvent(metadata);

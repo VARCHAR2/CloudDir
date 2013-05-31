@@ -2,6 +2,7 @@ package elka.clouddir.server;
 
 
 import elka.clouddir.server.communication.ClientCommunicationThread;
+import elka.clouddir.server.exception.LoginFailedException;
 import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
@@ -19,6 +20,7 @@ import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
+import elka.clouddir.shared.LoginInfo;
 
 /**
  * Kontroler serwera
@@ -52,9 +54,9 @@ public class ServerController {
         USER_GROUPS.add(group);
 
         USERS = new ArrayList<>();
-        USERS.add(new User("Michał", false, group, "12345678"));
-        USERS.add(new User("Богдан", false, group, "10101010"));
-        USERS.add(new User("Łukasz", false, group, "qwertyuiop"));
+        USERS.add(new User("Michal", false, group, "12345678"));
+        USERS.add(new User("Bogdan", false, group, "10101010"));
+        USERS.add(new User("Lukasz", false, group, "qwertyuiop"));
     }
 
 
@@ -144,8 +146,13 @@ public class ServerController {
             public void process(ServerEvent event) {
                 
             	LoginRequestEvent loginRequestEvent = (LoginRequestEvent) event;
-            	// TODO make checking out the user's information
-//            	System.out.println("Login: " + loginRequestEvent.getUsername() + "\nPassword: " + loginRequestEvent.getPassword());
+                try {
+                    logUser(loginRequestEvent.getLoginInfo());
+                    System.out.println("Login OK");
+                } catch (LoginFailedException e) {
+                    System.out.println(e.getMessage());
+                }
+                // TODO send LOGIN_OK or LOGIN_FAILED to the client
             }
         });
         procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {
@@ -167,6 +174,28 @@ public class ServerController {
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * próbuje zalogować użytkownika
+     * @param loginInfo
+     */
+    private void logUser(LoginInfo loginInfo) throws LoginFailedException {
+        for(User user : users) {
+            if(user.getName().equals(loginInfo.getLogin())) {
+                if(user.getPassword().equals(loginInfo.getPassword())) {
+                    if(user.isLoggedIn()) { //już zalogowany
+                        throw new LoginFailedException("User already logged in");
+                    } else { //OK
+                        user.setLoggedIn(true);
+                        return; //OK
+                    }
+                } else {
+                    throw new LoginFailedException("Wrong password");
+                }
+            }
+        }
+        throw new LoginFailedException("User not registered in the system");
     }
 
 }

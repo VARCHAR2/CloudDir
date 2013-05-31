@@ -1,23 +1,18 @@
 package elka.clouddir.server.serverevents;
 
+import elka.clouddir.shared.LoginInfo;
+
 /**
  * Żądanie zalogowania
  */
 public class LoginRequestEvent extends ServerEvent {
-    private final String username;
-    private final String password;
+    private final LoginInfo loginInfo;
 
-
-    public LoginRequestEvent(String username, String password) {
-        this.username = username;
-        this.password = password;
+    public LoginRequestEvent(LoginInfo loginInfo) {
+        this.loginInfo = loginInfo;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
+    public LoginInfo getLoginInfo() {
+        return loginInfo;
     }
 }
