@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import elka.clouddir.client.clientEvents.ClientEvent;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
@@ -24,15 +25,15 @@ import elka.clouddir.shared.HashGenerator;
 
 public class LocalFileChangedListener implements Runnable {
 
-	private BlockingQueue<FileSystemChangedEvent> fileSystemBlockingQueue;
+	private BlockingQueue<ClientEvent> fileSystemBlockingQueue;
 	private String folderPath = "testFolder";
 	private List<AbstractFileInfo> listOfFiles;
 	
 	
 	public LocalFileChangedListener(
-			BlockingQueue<FileSystemChangedEvent> fileSystemBlockingQueue) {
+			BlockingQueue<ClientEvent> clientEventQueue) {
 		
-		this.fileSystemBlockingQueue = fileSystemBlockingQueue;
+		this.fileSystemBlockingQueue = clientEventQueue;
 		
 	}
 

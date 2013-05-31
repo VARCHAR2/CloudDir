@@ -4,6 +4,7 @@ import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
+import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.TransmissionEnd;
 
@@ -53,12 +54,14 @@ public class ClientCommunicationThread extends Thread
                 ServerEvent event = processMessage(message);
 
                 //to po to, aby sprawdzić, że poprawnie zakończono transmisję
-                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
+//                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
 
                 //ok - wyślij do serwera
                 serverEventQueue.put(event);
             } catch (Exception e) {
-                e.printStackTrace();
+            	running = false;
+//                e.printStackTrace();
+            	System.out.println("Connection was closed");
             }
 
         }
@@ -78,9 +81,10 @@ public class ClientCommunicationThread extends Thread
     private ServerEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
         switch (message) {
             case LOGIN_REQUEST:
-                String username = (String) in.readObject();
-                String password = (String) in.readObject();
-                return new LoginRequestEvent(username, password);
+                LoginInfo loginInfo = (LoginInfo) in.readObject();
+//                String password = (String) in.readObject();
+                System.out.println("LOGIN_REQUEST transmitted");
+                return new LoginRequestEvent(loginInfo.getLogin(), loginInfo.getPassword());
             case FILE_CHANGED:
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
                 return new FileChangedEvent(metadata);

@@ -30,7 +30,9 @@ public class ConnectionReceiver implements Runnable {
         running = true;
         while(running) {
             try {
+            	System.out.println("Trying to accept");
                 Socket clientSocket = serverSocket.accept();
+                System.out.println(serverSocket.getInetAddress().getHostAddress());
                 serverEvents.put(new ClientConnectEvent(clientSocket));
             } catch (IOException e) {
                 e.printStackTrace();

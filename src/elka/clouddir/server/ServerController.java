@@ -26,6 +26,7 @@ public class ServerController {
 
     private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
 
+    private int MAX_CLIENTS = 10;
 
     boolean         running;
 //
@@ -46,13 +47,15 @@ public class ServerController {
     public ServerController() throws IOException {
 
         initProcMap();
+        threads = new ClientCommunicationThread[MAX_CLIENTS];
 
         serverEventQueue = new LinkedBlockingQueue<>();
 
-
-        connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
-
         serverSocket = new ServerSocket(PORT);
+        connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
+        
+        
+        new Thread(connectionReceiver).start();
     }
 
 //
@@ -88,8 +91,8 @@ public class ServerController {
      * @param clientSocket
      * @throws IOException
      */
-    private void connectClient(Socket clientSocket) throws IOException{
-            threads[threads.length] = new ClientCommunicationThread(clientSocket, serverEventQueue);
+    private void connectClient(Socket clientSocket) throws IOException {
+            threads[threads.length - 1] = new ClientCommunicationThread(clientSocket, serverEventQueue);
             threads[threads.length - 1].start();
     }
 
@@ -104,7 +107,10 @@ public class ServerController {
         procMap.put(LoginRequestEvent.class, new ServerEventProcessingStrategy() {
             @Override
             public void process(ServerEvent event) {
-                //TODO
+                
+            	LoginRequestEvent loginRequestEvent = (LoginRequestEvent) event;
+            	// TODO make checking out the user's information
+//            	System.out.println("Login: " + loginRequestEvent.getUsername() + "\nPassword: " + loginRequestEvent.getPassword());
             }
         });
         procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {

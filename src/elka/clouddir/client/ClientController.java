@@ -1,13 +1,17 @@
 package elka.clouddir.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.LoginRequestEvent;
+import elka.clouddir.shared.LoginInfo;
+import elka.clouddir.shared.Message;
 
 public class ClientController {
 
@@ -15,17 +19,32 @@ public class ClientController {
 	 * @param args
 	 */
 	
-	private final BlockingQueue<FileSystemChangedEvent> fileSystemBlockingQueue;
-	private LocalFileChangedListener localFileSystemListener;
-	private static Path dir = Paths.get("testFolder");
+	private final BlockingQueue<ClientEvent> clientEventQueue;
 	
-	public ClientController(BlockingQueue<FileSystemChangedEvent> fileSystemBlockingQueue, LocalFileChangedListener localFileChangedListener) {
+	private LocalFileChangedListener localFileSystemListener;
+	private ServerCommunicationThread serverCommunicationThread;
+	
+	private Map<Class<? extends ClientEvent>, Strategy> strategyMap;
+	
+	public ClientController() {
 		
-		this.fileSystemBlockingQueue = fileSystemBlockingQueue;
-		this.localFileSystemListener = localFileChangedListener;
-		
-		System.out.println("Abstract signing in");
+		clientEventQueue = new LinkedBlockingQueue<ClientEvent>();
 
+		try {
+			initStrategyMap();
+			
+			serverCommunicationThread = new ServerCommunicationThread(clientEventQueue);
+			serverCommunicationThread.start();
+
+			localFileSystemListener = new LocalFileChangedListener(clientEventQueue);
+			Thread localFileSystemThread = new Thread(localFileSystemListener);
+			localFileSystemThread.start();
+		} catch (IOException e) {
+			System.out.println("Server is down");
+			System.exit(0);
+		}
+		
+		/*
 		try {
 			List<AbstractFileInfo> metadataArray = localFileSystemListener.getSystemMetadata();
 			for (AbstractFileInfo abstractFileInfo : metadataArray) {
@@ -37,8 +56,65 @@ public class ClientController {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		
 	}
 
+	private void initStrategyMap() {
+		strategyMap = new HashMap<Class<? extends ClientEvent>, ClientController.Strategy>();
+		
+		strategyMap.put(LoginRequestEvent.class, new LoginRequestStrategy());
+		
+	}
+
+	public void loop() {
+
+		clientEventQueue.add(new LoginRequestEvent());
+		
+		while (true) {
+			try {
+				ClientEvent clientEvent = clientEventQueue.take();
+				strategyMap.get(clientEvent.getClass()).perform(clientEvent);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	abstract class Strategy {
+		
+		abstract void perform(ClientEvent clientEvent);
+		
+	}
+	
+	class LoginRequestStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			try{
+				System.out.print("Login: ");
+			    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+			    String login = bufferRead.readLine();
+		 
+			    System.out.println("Password: ");
+			    String password = bufferRead.readLine();
+			    serverCommunicationThread.sendMessage(Message.LOGIN_REQUEST);
+			    serverCommunicationThread.sendObject(new LoginInfo(login, password));
+//			    serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+			
+		}
+
+	}
+	
+	public static void main(String[] args) {
+		new ClientController().loop();
+	}
+	
 }
