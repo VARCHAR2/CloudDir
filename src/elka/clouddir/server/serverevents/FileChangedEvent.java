@@ -5,14 +5,8 @@ import elka.clouddir.server.model.AbstractFileInfo;
 /**
  * Zmieniono plik
  */
-public class FileChangedEvent extends ServerEvent {
-    private final AbstractFileInfo metadata;
-
+public class FileChangedEvent extends FileEvent {
     public FileChangedEvent(AbstractFileInfo metadata) {
-        this.metadata = metadata;
-    }
-
-    public AbstractFileInfo getMetadata() {
-        return metadata;
+        super(metadata);
     }
 }
