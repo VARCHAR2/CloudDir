@@ -1,11 +1,9 @@
 package elka.clouddir.server.model;
 
-import java.nio.file.Path;
-import java.util.Date;
 
 public class SharedEmptyFolder extends AbstractFileInfo {
 
-	public SharedEmptyFolder(String relativePath, long modified, User lastModifiedBy) {
+	public SharedEmptyFolder(String relativePath, long modified, String lastModifiedBy) {
 		super(relativePath, modified, lastModifiedBy);
 		// TODO Auto-generated constructor stub
 	}

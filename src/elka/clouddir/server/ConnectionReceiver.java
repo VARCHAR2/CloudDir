@@ -1,13 +1,12 @@
 package elka.clouddir.server;
 
-import elka.clouddir.server.communication.ClientCommunicationThread;
-import elka.clouddir.server.serverevents.ClientConnectEvent;
-import elka.clouddir.server.serverevents.ServerEvent;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+
+import elka.clouddir.server.serverevents.ClientConnectEvent;
+import elka.clouddir.server.serverevents.ServerEvent;
 
 /**
  * Klasa obsługująca dołączanie się nowych klientów

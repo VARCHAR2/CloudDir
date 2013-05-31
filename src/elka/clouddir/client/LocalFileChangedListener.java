@@ -20,7 +20,6 @@ import elka.clouddir.client.clientEvents.ClientEvent;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
-import elka.clouddir.server.model.User;
 import elka.clouddir.shared.HashGenerator;
 
 public class LocalFileChangedListener implements Runnable {
@@ -96,10 +95,12 @@ public class LocalFileChangedListener implements Runnable {
 	}
 
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
-		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), new User("bogdan", false, null));
+		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan"); // TODO implement setting username to a file
 	}
 
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
-		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), new User("bogdan", false, null), HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace());
+		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), "bogdan", 
+				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace()); // TODO implement setting username to a file
 	}
+	
 }

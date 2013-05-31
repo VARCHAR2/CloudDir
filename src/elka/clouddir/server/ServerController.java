@@ -1,9 +1,5 @@
 package elka.clouddir.server;
 
-import elka.clouddir.server.communication.ClientCommunicationThread;
-import elka.clouddir.server.serverevents.*;
-
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,6 +7,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import elka.clouddir.server.communication.ClientCommunicationThread;
+import elka.clouddir.server.serverevents.ClientConnectEvent;
+import elka.clouddir.server.serverevents.FileChangedEvent;
+import elka.clouddir.server.serverevents.LoginRequestEvent;
+import elka.clouddir.server.serverevents.ServerEvent;
+import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
 
 public class ServerController {
 

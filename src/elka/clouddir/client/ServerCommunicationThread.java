@@ -1,22 +1,16 @@
 package elka.clouddir.client;
 
-import elka.clouddir.client.clientEvents.ClientEvent;
-import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
-import elka.clouddir.client.clientEvents.LoginRejectedEvent;
-import elka.clouddir.server.model.AbstractFileInfo;
-import elka.clouddir.server.serverevents.FileChangedEvent;
-import elka.clouddir.server.serverevents.LoginRequestEvent;
-import elka.clouddir.shared.Message;
-import elka.clouddir.shared.TransmissionEnd;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+
+import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
+import elka.clouddir.client.clientEvents.LoginRejectedEvent;
+import elka.clouddir.shared.Message;
 
 /**
  * @author Bogdan Shkola

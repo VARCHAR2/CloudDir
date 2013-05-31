@@ -1,14 +1,12 @@
 package elka.clouddir.server.model;
 
-import java.nio.file.Path;
-import java.util.Date;
 
 public class SharedFile extends AbstractFileInfo{
 
 	private String md4sum;
 	private long size;
 	
-	public SharedFile(String relativePath, long modified, User lastModifiedBy, String md4sum, long size) {
+	public SharedFile(String relativePath, long modified, String lastModifiedBy, String md4sum, long size) {
 		super(relativePath, modified, lastModifiedBy);
 		// TODO Auto-generated constructor stub
 		this.md4sum = md4sum;

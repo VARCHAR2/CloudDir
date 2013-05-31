@@ -1,20 +1,18 @@
 package elka.clouddir.server.model;
 
-import java.nio.file.Path;
-import java.util.Date;
 
 public abstract class AbstractFileInfo {
 	private String relativePath;
 	private long modified;
-	private User lastModifiedBy;
+	private String lastModifiedBy;
 	
 	
 	public AbstractFileInfo(String relativePath, long modified,
-			User lastModifiedBy) {
+			String username) {
 		super();
 		this.relativePath = relativePath;
 		this.modified = modified;
-		this.lastModifiedBy = lastModifiedBy;
+		this.lastModifiedBy = username;
 	}
 
 	public String getRelativePath() {
@@ -33,17 +31,17 @@ public abstract class AbstractFileInfo {
 		this.modified = modified;
 	}
 	
-	public User getLastModifiedBy() {
+	public String getLastModifiedBy() {
 		return lastModifiedBy;
 	}
 	
-	public void setLastModifiedBy(User lastModifiedBy) {
+	public void setLastModifiedBy(String lastModifiedBy) {
 		this.lastModifiedBy = lastModifiedBy;
 	}
 	
 	@Override
 	public String toString() {
-		return "Relative path: " + relativePath + "\nModified: " + modified + "\nBy: " + lastModifiedBy.toString();
+		return "Relative path: " + relativePath + "\nModified: " + modified + "\nBy: " + lastModifiedBy;
 	}
 	
 }
