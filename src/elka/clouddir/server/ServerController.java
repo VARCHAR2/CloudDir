@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,7 +18,7 @@ public class ServerController {
 
     private static final int PORT = 3333;
 
-    private ClientCommunicationThread threads[];
+    private List<ClientCommunicationThread> threads;
 //    int             size;
     private ServerSocket serverSocket;
 
@@ -47,9 +49,13 @@ public class ServerController {
     public ServerController() throws IOException {
 
         initProcMap();
-        threads = new ClientCommunicationThread[MAX_CLIENTS];
 
         serverEventQueue = new LinkedBlockingQueue<>();
+
+        threads = new LinkedList<>();
+
+
+        connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
 
         serverSocket = new ServerSocket(PORT);
         connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
@@ -91,9 +97,10 @@ public class ServerController {
      * @param clientSocket
      * @throws IOException
      */
-    private void connectClient(Socket clientSocket) throws IOException {
-            threads[threads.length - 1] = new ClientCommunicationThread(clientSocket, serverEventQueue);
-            threads[threads.length - 1].start();
+    private void connectClient(Socket clientSocket) throws IOException{
+            ClientCommunicationThread newThread = new ClientCommunicationThread(clientSocket, serverEventQueue);
+            threads.add(newThread);
+            newThread.start();
     }
 
     private void initProcMap() {
