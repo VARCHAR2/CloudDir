@@ -2,6 +2,8 @@ package elka.clouddir.shared;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -30,6 +32,9 @@ public class FileVisitor extends SimpleFileVisitor<Path>{
 		// check if the directory was empty
 		if(lastVisitedDir != null){
 			if(lastVisitedDir.compareTo(dir) == 0){
+//				String relativePath = dir.toString();
+//				long modified = Files.getLastModifiedTime(dir, LinkOption.NOFOLLOW_LINKS).toMillis();
+//				String lastModifiedBy;
 				//TODO add dir to folders
 				//SharedEmptyFolder folder = new SharedEmptyFolder(dir, modified, lastModifiedBy)
 			}
