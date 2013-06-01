@@ -21,6 +21,7 @@ import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
 import elka.clouddir.shared.LoginInfo;
+import elka.clouddir.shared.Message;
 
 /**
  * Kontroler serwera
@@ -143,16 +144,22 @@ public class ServerController {
         });
         procMap.put(LoginRequestEvent.class, new ServerEventProcessingStrategy() {
             @Override
-            public void process(ServerEvent event) {
+            public void process(ServerEvent event) throws IOException {
                 
             	LoginRequestEvent loginRequestEvent = (LoginRequestEvent) event;
+                Message result;
+
                 try {
                     logUser(loginRequestEvent.getLoginInfo());
                     System.out.println("Login OK");
+                    result = Message.LOGIN_OK;
                 } catch (LoginFailedException e) {
                     System.out.println(e.getMessage());
+                    result = Message.LOGIN_FAILED;
                 }
-                // TODO send LOGIN_OK or LOGIN_FAILED to the client
+
+                //wyślij komunikat zwrotny
+                loginRequestEvent.getSenderThread().sendObject(result);
             }
         });
         procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {

@@ -79,8 +79,8 @@ public class ClientController {
 	 */
 	public void loop() {
 
-//		clientEventQueue.add(new LoginRequestEvent());
-		clientEventQueue.add(new LoginAcceptedEvent()); // TODO change back when server will accept the log in
+		clientEventQueue.add(new LoginRequestEvent());
+//		clientEventQueue.add(new LoginAcceptedEvent()); // TODO change back when server will accept the log in
 		
 		while (true) {
 			try {
@@ -96,7 +96,7 @@ public class ClientController {
 	
 	/**
 	 * Common strategy for client
-	 * @author Богдан
+	 * @author пїЅпїЅпїЅпїЅпїЅпїЅ
 	 *
 	 */
 	abstract class Strategy {

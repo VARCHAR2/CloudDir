@@ -84,10 +84,10 @@ public class ClientCommunicationThread extends Thread
                 LoginInfo loginInfo = (LoginInfo) in.readObject();
 //                String password = (String) in.readObject();
                 System.out.println("LOGIN_REQUEST transmitted");
-                return new LoginRequestEvent(loginInfo);
+                return new LoginRequestEvent(this, loginInfo);
             case FILE_CHANGED:
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
-                return new FileChangedEvent(metadata);
+                return new FileChangedEvent(this, metadata);
             default:
                 throw new UnsupportedOperationException("Operation not implemented");
         }
