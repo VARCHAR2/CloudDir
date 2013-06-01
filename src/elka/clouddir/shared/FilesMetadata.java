@@ -4,6 +4,11 @@ import java.io.Serializable;
 
 import elka.clouddir.server.model.AbstractFileInfo;
 
+
+/**
+ * Use elka.clouddir.shared.protocol.SharedDirectoryMetadataBean instead
+ */
+@Deprecated
 public class FilesMetadata implements Serializable {
 
 	private final AbstractFileInfo[] filesMetadataArray;
