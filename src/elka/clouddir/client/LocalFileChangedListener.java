@@ -2,21 +2,20 @@ package elka.clouddir.client;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import net.contentobjects.jnotify.JNotify;
+import net.contentobjects.jnotify.JNotifyException;
+import net.contentobjects.jnotify.JNotifyListener;
 import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.FileChanged;
+import elka.clouddir.client.clientEvents.FileCreatedEvent;
+import elka.clouddir.client.clientEvents.FileDeletedEvent;
+import elka.clouddir.client.clientEvents.FileModifiedEvent;
+import elka.clouddir.client.clientEvents.FileRenamedEvent;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
@@ -30,16 +29,18 @@ import elka.clouddir.shared.HashGenerator;
  */
 public class LocalFileChangedListener implements Runnable {
 
-	private BlockingQueue<ClientEvent> fileSystemBlockingQueue;
+	private BlockingQueue<ClientEvent> clientEventQueue;
 	private String folderPath = "testFolder";
 	private List<AbstractFileInfo> listOfFiles;
 	
-	
+    /**
+     * Creates a WatchService and registers the given directory
+     */
 	public LocalFileChangedListener(
-			BlockingQueue<ClientEvent> clientEventQueue) {
+			BlockingQueue<ClientEvent> clientEventQueue) throws IOException {
 		
-		this.fileSystemBlockingQueue = clientEventQueue;
-		
+		this.clientEventQueue = clientEventQueue;
+	
 	}
 
 	/**
@@ -48,33 +49,65 @@ public class LocalFileChangedListener implements Runnable {
 	@Override
 	public void run() {
 		
-		try (WatchService service = FileSystems.getDefault().newWatchService()) {
-			Map<WatchKey, Path> keyMap = new HashMap<>();
-			Path path = Paths.get(folderPath);
-			keyMap.put(path.register(service, 
-					StandardWatchEventKinds.ENTRY_CREATE,
-					StandardWatchEventKinds.ENTRY_DELETE,
-					StandardWatchEventKinds.ENTRY_MODIFY),
-					path);
-			
-			WatchKey watchKey;
-			
-			do {
-				watchKey = service.take();
-				Path eventDir = keyMap.get(watchKey);
-				
-				for (WatchEvent<?> event : watchKey.pollEvents()) {
-					WatchEvent.Kind<?> kind = event.kind();
-					Path eventPath = (Path)event.context();
-					System.out.println(eventDir + ": " + kind + ": " + eventPath);
-				}
-				
-			} while (watchKey.reset());
-		} catch (Exception e) {
-			// TODO: handle exception
+        // watch mask, specify events you care about,
+        // or JNotify.FILE_ANY for all events.
+        int mask = JNotify.FILE_CREATED
+                | JNotify.FILE_DELETED
+                | JNotify.FILE_MODIFIED
+                | JNotify.FILE_RENAMED;
+
+        // watch subtree?
+        boolean watchSubtree = true;
+
+        // add actual watch
+        int watchID;
+		try {
+			watchID = JNotify.addWatch(folderPath, mask, watchSubtree, new FolderListener());
+	        // sleep a little, the application will exit if you
+	        // don't (watching is asynchronous), depending on your
+	        // application, this may not be required
+	        Thread.sleep(1000000);
+
+	        // to remove watch the watch
+	        boolean res = JNotify.removeWatch(watchID);
+	        if (!res) {
+	            // invalid watch ID specified.
+	        }
+		} catch (JNotifyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
+
 	}
+	
+	/**
+	 * Listener for the file system
+	 * @author bogdan
+	 *
+	 */
+	class FolderListener implements JNotifyListener {
+
+        public void fileRenamed(int wd, String rootPath, String oldName,
+                String newName) {
+        	clientEventQueue.add(new FileRenamedEvent(oldName, newName));
+        }
+
+        public void fileModified(int wd, String rootPath, String name) {
+        	clientEventQueue.add(new FileModifiedEvent(name));
+        }
+
+        public void fileDeleted(int wd, String rootPath, String name) {
+        	clientEventQueue.add(new FileDeletedEvent(name));
+        }
+
+        public void fileCreated(int wd, String rootPath, String name) {
+        	clientEventQueue.add(new FileCreatedEvent(name));
+        }
+
+    }
 
 	/**
 	 * Listing file-system metadata

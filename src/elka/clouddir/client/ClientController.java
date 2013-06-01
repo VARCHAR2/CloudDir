@@ -11,6 +11,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.FileCreatedEvent;
+import elka.clouddir.client.clientEvents.FileDeletedEvent;
+import elka.clouddir.client.clientEvents.FileModifiedEvent;
+import elka.clouddir.client.clientEvents.FileRenamedEvent;
 import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
 import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.client.clientEvents.LoginRequestEvent;
@@ -62,6 +66,11 @@ public class ClientController {
 		strategyMap.put(LoginAcceptedEvent.class, new LoginAcceptedStrategy());
 		strategyMap.put(LoginRejectedEvent.class, new LoginRejectedStrategy());
 		
+		strategyMap.put(FileCreatedEvent.class, new LoginRejectedStrategy());
+		strategyMap.put(FileModifiedEvent.class, new LoginRejectedStrategy());
+		strategyMap.put(FileRenamedEvent.class, new LoginRejectedStrategy());
+		strategyMap.put(FileDeletedEvent.class, new LoginRejectedStrategy());
+		
 	}
 
 	/**
@@ -70,7 +79,8 @@ public class ClientController {
 	 */
 	public void loop() {
 
-		clientEventQueue.add(new LoginRequestEvent());
+//		clientEventQueue.add(new LoginRequestEvent());
+		clientEventQueue.add(new LoginAcceptedEvent()); // TODO change back when server will accept the log in
 		
 		while (true) {
 			try {
@@ -113,7 +123,7 @@ public class ClientController {
 			    String password = bufferRead.readLine();
 			    serverCommunicationThread.sendMessage(Message.LOGIN_REQUEST);
 			    serverCommunicationThread.sendObject(new LoginInfo(login, password));
-//			    clientEventQueue.add(new LoginAcceptedEvent());
+//			    clientEventQueue.add(new LoginAcceptedEvent()); 
 //			    serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
 			}
 			catch(IOException e)
@@ -166,6 +176,58 @@ public class ClientController {
 		void perform(ClientEvent clientEvent) {
 			System.out.println("Login was rejected");
 			clientEventQueue.add(new LoginRequestEvent());
+		}
+		
+	}
+	
+	class FileCreatedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			// TODO implement sending info about the created file			
+		}
+		
+	}
+	
+	class FileModifiedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			// TODO implement sending info about the modified file			
+		}
+		
+	}
+	
+	class FileRenamedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			FileRenamedEvent fileRenamedEvent = (FileRenamedEvent) clientEvent;
+			try {
+				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
+				// TODO implement sending info about the renamed file
+//				serverCommunicationThread.sendObject(fileRenamedEvent.getOldName());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+		
+	}
+
+	class FileDeletedStrategy extends Strategy {
+		
+		@Override
+		void perform(ClientEvent clientEvent) {
+			FileDeletedEvent fileDeletedEvent = (FileDeletedEvent) clientEvent;
+			try {
+				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
+				serverCommunicationThread.sendObject(fileDeletedEvent.getName());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 		
 	}

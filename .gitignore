@@ -6,8 +6,9 @@
 .idea/*
 
 bin/*
+testFolder/*
 
 # Package Files #
-*.jar
+
 *.war
 *.ear

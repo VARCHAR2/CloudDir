@@ -1,7 +1,9 @@
 package elka.clouddir.server.model;
 
+import java.io.Serializable;
 
-public abstract class AbstractFileInfo {
+
+public abstract class AbstractFileInfo implements Serializable {
 	private String relativePath;
 	private long modified;
 	private String lastModifiedBy;
