@@ -2,11 +2,13 @@ package elka.clouddir.shared;
 
 import java.io.Serializable;
 
+/**
+ * Class for keeping the log in information while sending it to server
+ * @author bogdan
+ *
+ */
 public class LoginInfo implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3189573616787247176L;
 	
 	private final String login;

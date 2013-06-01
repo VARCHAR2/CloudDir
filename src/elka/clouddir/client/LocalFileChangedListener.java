@@ -22,6 +22,12 @@ import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.shared.HashGenerator;
 
+/**
+ * That class handles program communication with file system.
+ * has it's own thread for listening to the changes
+ * @author bogdan
+ *
+ */
 public class LocalFileChangedListener implements Runnable {
 
 	private BlockingQueue<ClientEvent> fileSystemBlockingQueue;
@@ -36,6 +42,9 @@ public class LocalFileChangedListener implements Runnable {
 		
 	}
 
+	/**
+	 * Listening for the file-system changes
+	 */
 	@Override
 	public void run() {
 		
@@ -67,6 +76,12 @@ public class LocalFileChangedListener implements Runnable {
 		
 	}
 
+	/**
+	 * Listing file-system metadata
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws IOException
+	 */
 	public List<AbstractFileInfo> getSystemMetadata() throws NoSuchAlgorithmException, IOException {
 		
 		File folder = new File(folderPath);
@@ -74,9 +89,15 @@ public class LocalFileChangedListener implements Runnable {
 		listOfFiles = new ArrayList<AbstractFileInfo>();
 		listFilesForFolder(folder);
 		
-		return /*(AbstractFileInfo[]) */listOfFiles;
+		return listOfFiles;
 	}
 	
+	/**
+	 * Listing files in the folder
+	 * @param folder
+	 * @throws NoSuchAlgorithmException
+	 * @throws IOException
+	 */
 	private void listFilesForFolder(final File folder) throws NoSuchAlgorithmException, IOException {
 		if (folder.listFiles().length == 0) {
 			listOfFiles.add(generateSharedEmptyFolder(folder));
@@ -84,7 +105,7 @@ public class LocalFileChangedListener implements Runnable {
 		else {
 		    for (final File fileEntry : folder.listFiles()) {
 		        if (fileEntry.isDirectory()) {
-		//	        	listOfFiles.add(generateSharedEmptyFolder(fileEntry));
+		        	listOfFiles.add(generateSharedEmptyFolder(fileEntry));
 		        	listFilesForFolder(fileEntry);
 		        } 
 		        else {
@@ -94,10 +115,22 @@ public class LocalFileChangedListener implements Runnable {
 		}
 	}
 
+	/**
+	 * Making up the metadata for the empty folder
+	 * @param folder
+	 * @return
+	 */
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
 		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan"); // TODO implement setting username to a file
 	}
 
+	/**
+	 * Making up the metadata for the existing file
+	 * @param fileEntry
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws IOException
+	 */
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
 		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), "bogdan", 
 				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace()); // TODO implement setting username to a file

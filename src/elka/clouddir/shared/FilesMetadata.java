@@ -6,7 +6,9 @@ import elka.clouddir.server.model.AbstractFileInfo;
 
 
 /**
+ * Class for sending metadata from client to server
  * Use elka.clouddir.shared.protocol.SharedDirectoryMetadataBean instead
+ * @author bogdan
  */
 @Deprecated
 public class FilesMetadata implements Serializable {

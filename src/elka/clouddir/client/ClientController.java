@@ -20,14 +20,11 @@ import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 
 /**
- * Kontroler klienta
+ * Controller of the client
+ * @author bogdan
  */
 public class ClientController {
 
-	/**
-	 * @param args
-	 */
-	
 	private final BlockingQueue<ClientEvent> clientEventQueue;
 	
 	private LocalFileChangedListener localFileSystemListener;
@@ -55,6 +52,9 @@ public class ClientController {
 		
 	}
 
+	/**
+	 * Initialization of strategy map
+	 */
 	private void initStrategyMap() {
 		strategyMap = new HashMap<Class<? extends ClientEvent>, ClientController.Strategy>();
 		
@@ -64,6 +64,10 @@ public class ClientController {
 		
 	}
 
+	/**
+	 * Main loop of the controller
+	 * Take event from the queue and handle it
+	 */
 	public void loop() {
 
 		clientEventQueue.add(new LoginRequestEvent());
@@ -80,12 +84,22 @@ public class ClientController {
 		}
 	}
 	
+	/**
+	 * Common strategy for client
+	 * @author Богдан
+	 *
+	 */
 	abstract class Strategy {
 		
 		abstract void perform(ClientEvent clientEvent);
 		
 	}
 	
+	/**
+	 * Strategy after executing the program - trying to log in
+	 * @author bogdan
+	 *
+	 */
 	class LoginRequestStrategy extends Strategy {
 		
 		@Override
@@ -111,6 +125,12 @@ public class ClientController {
 
 	}
 	
+	/**
+	 * Strategy after log in accepted by server.
+	 * Collecting metadata and sending it to server
+	 * @author bogdan
+	 *
+	 */
 	class LoginAcceptedStrategy extends Strategy {
 		
 		@Override
@@ -134,6 +154,12 @@ public class ClientController {
 		
 	}
 	
+	/**
+	 * Strategy after unsuccessful log in. 
+	 * Going back to Log in strategy
+	 * @author bogdan
+	 *
+	 */
 	class LoginRejectedStrategy extends Strategy {
 		
 		@Override

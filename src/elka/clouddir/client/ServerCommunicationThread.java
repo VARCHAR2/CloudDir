@@ -13,22 +13,23 @@ import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.shared.Message;
 
 /**
- * @author Bogdan Shkola
+ * Class for communication with server
+ * @author bogdan
  */
 public class ServerCommunicationThread extends Thread {
-    private final ObjectOutputStream  out;
-    private final ObjectInputStream   in;
+    private final ObjectOutputStream out;
+    private final ObjectInputStream in;
     
 	private Socket clientSocket;
 	private static final int PORT = 3333;
 
     private final BlockingQueue<ClientEvent> clientEventQueue;
 
-//    static Map<Message, MessageProcesser> processerMap;
-//    static {
-//        initMap();
-//    }
-
+    /**
+     * Creating the socket and connecting with server
+     * @param clientEventQueue
+     * @throws IOException - server is down
+     */
     public ServerCommunicationThread(BlockingQueue<ClientEvent> clientEventQueue) throws IOException {
     	
         this.clientEventQueue = clientEventQueue;
@@ -41,6 +42,9 @@ public class ServerCommunicationThread extends Thread {
         
     }
 
+    /**
+     * Listening for the incoming messages from server
+     */
     @Override
     public void run() {
     	try {
@@ -67,11 +71,24 @@ public class ServerCommunicationThread extends Thread {
 
     }
 
+    /**
+     * Sending the object to server
+     * @param file
+     * @throws IOException
+     */
     public void sendObject(final Serializable file) throws IOException {
         out.writeObject(file);
         out.flush();
     }
 
+    /**
+     * Processing the Message depending on the type
+     * @param message
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws InterruptedException
+     */
     private ClientEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
     	
     	switch (message) {
@@ -85,6 +102,11 @@ public class ServerCommunicationThread extends Thread {
     	
     }
 
+    /**
+     * Sending the type of the message
+     * @param message
+     * @throws IOException
+     */
 	public void sendMessage(Message message) throws IOException {
 		out.writeObject(message);
 		out.flush();
