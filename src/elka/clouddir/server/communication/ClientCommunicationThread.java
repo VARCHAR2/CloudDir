@@ -1,9 +1,7 @@
 package elka.clouddir.server.communication;
 
 import elka.clouddir.server.model.AbstractFileInfo;
-import elka.clouddir.server.serverevents.FileChangedEvent;
-import elka.clouddir.server.serverevents.LoginRequestEvent;
-import elka.clouddir.server.serverevents.ServerEvent;
+import elka.clouddir.server.serverevents.*;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.TransmissionEnd;
@@ -82,12 +80,21 @@ public class ClientCommunicationThread extends Thread
         switch (message) {
             case LOGIN_REQUEST:
                 LoginInfo loginInfo = (LoginInfo) in.readObject();
-//                String password = (String) in.readObject();
                 System.out.println("LOGIN_REQUEST transmitted");
                 return new LoginRequestEvent(this, loginInfo);
-            case FILE_CHANGED:
+            case FILE_CHANGED: {
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
                 return new FileChangedEvent(this, metadata);
+            }
+            case FILE_DELETED: {
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                return new FileDeletedEvent(this, metadata);
+            }
+            case FILEPATH_CHANGED: {
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                return new FilePathChangedEvent(this, metadata);
+            }
+
             default:
                 throw new UnsupportedOperationException("Operation not implemented");
         }

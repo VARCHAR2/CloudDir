@@ -3,6 +3,7 @@ package elka.clouddir.server;
 
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.exception.LoginFailedException;
+import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
@@ -40,6 +41,8 @@ public class ServerController {
     private ConnectionReceiver connectionReceiver;
 
     private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
+
+    private List<AbstractFileInfo> filesList;
 
     private int MAX_CLIENTS = 10;
 
@@ -165,7 +168,10 @@ public class ServerController {
         procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {
             @Override
             public void process(ServerEvent event) {
-                //TODO
+                FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
+                AbstractFileInfo metadata = fileChangedEvent.getMetadata();
+                //filesList.contains(metadata)
+                //FIXME
             }
         });
     }
