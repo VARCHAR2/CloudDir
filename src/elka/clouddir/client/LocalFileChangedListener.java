@@ -22,6 +22,7 @@ import elka.clouddir.client.clientEvents.FileCreatedEvent;
 import elka.clouddir.client.clientEvents.FileDeletedEvent;
 import elka.clouddir.client.clientEvents.FileModifiedEvent;
 import elka.clouddir.client.clientEvents.FileRenamedEvent;
+import elka.clouddir.client.exceptions.MetadataNotFound;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
@@ -37,7 +38,6 @@ public class LocalFileChangedListener implements Runnable {
 
 	private BlockingQueue<ClientEvent> clientEventQueue;
 	private String folderPath = "testFolder";
-	private List<AbstractFileInfo> listOfFiles;
 	
 	private List<AbstractFileInfo> metadataList;
 	
@@ -124,14 +124,13 @@ public class LocalFileChangedListener implements Runnable {
 	 * @throws NoSuchAlgorithmException
 	 * @throws IOException
 	 */
-	public List<AbstractFileInfo> getSystemMetadata() throws NoSuchAlgorithmException, IOException {
+	public List<AbstractFileInfo> initSystemMetadata() throws NoSuchAlgorithmException, IOException {
 		
 		File folder = new File(folderPath);
 		
-		listOfFiles = new ArrayList<AbstractFileInfo>();
 		listFilesForFolder(folder);
 		
-		return listOfFiles;
+		return metadataList;
 	}
 	
 	/**
@@ -142,16 +141,15 @@ public class LocalFileChangedListener implements Runnable {
 	 */
 	private void listFilesForFolder(final File folder) throws NoSuchAlgorithmException, IOException {
 		if (folder.listFiles().length == 0) {
-			listOfFiles.add(generateSharedEmptyFolder(folder));
+			metadataList.add(generateSharedEmptyFolder(folder));
 		}
 		else {
 		    for (final File fileEntry : folder.listFiles()) {
 		        if (fileEntry.isDirectory()) {
-		        	listOfFiles.add(generateSharedEmptyFolder(fileEntry));
 		        	listFilesForFolder(fileEntry);
 		        } 
 		        else {
-		        	listOfFiles.add(generateSharedFileinfo(fileEntry));
+		        	metadataList.add(generateSharedFileinfo(fileEntry));
 		        }
 		    }
 		}
@@ -164,8 +162,7 @@ public class LocalFileChangedListener implements Runnable {
 	 */
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
 		String relativePath = folder.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
-		SharedEmptyFolder folderMetadata = new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan", null);
-		metadataList.add(folderMetadata);
+		SharedEmptyFolder folderMetadata = new SharedEmptyFolder(relativePath, folder.lastModified(), "bogdan", null);
 
 		return folderMetadata; // TODO implement setting username to a file
 	}
@@ -181,26 +178,25 @@ public class LocalFileChangedListener implements Runnable {
 		String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
 		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", 
 				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null);
-		metadataList.add(fileMetadata);
 
 		return fileMetadata; // TODO implement setting username to a file
 	}
 
 	/**
 	 * Gets metadata ready in map
-	 * @param name
+	 * @param relativePath
 	 * @return
 	 * @throws IOException 
 	 * @throws NoSuchAlgorithmException 
 	 */
-	public AbstractFileInfo getMetadata(String name) throws NoSuchAlgorithmException, IOException {
+	/*public AbstractFileInfo getMetadata(String relativePath) throws NoSuchAlgorithmException, IOException {
 		for (AbstractFileInfo metadata : metadataList) {
-			if (metadata.getRelativePath().equals(name)) {
+			if (metadata.getRelativePath().equals(relativePath)) {
 				return metadata;
 			}
 		}
 		throw new RuntimeException("no metadata, when getting it out");
-	}
+	}*/
 	
 	/**
 	 * Returns file in array of bytes
@@ -217,29 +213,107 @@ public class LocalFileChangedListener implements Runnable {
 		return folderPath + File.separator + path;
 	}
 
-	public AbstractFileInfo addMetadata(String name) throws NoSuchAlgorithmException, IOException {
-		
-		File file = new File(getRelativeProgramPath(name));
-		if (file.isDirectory()) {
-			return generateSharedEmptyFolder(file);
+	public void addMetadata(AbstractFileInfo addedMatadata) {
+		metadataList.add(addedMatadata);
+	}
+	
+	public void printMetadata() {
+		System.out.println();
+		int i = 0;
+		for (AbstractFileInfo metadata : metadataList) {
+			i++;
+			System.out.println(i + "   " + metadata.getRelativePath());
 		}
-		else {
-			return generateSharedFileinfo(file);
-		}
-		
 	}
 
-	public AbstractFileInfo deleteMetadata(String name) {
+	public boolean isDirectory(String relativePath) {
+//		System.out.println(relativePath);
+		relativePath = File.separator + relativePath; 
+		File file = new File(getRelativeProgramPath(relativePath));
+		if (file.exists()) {
+			return file.isDirectory();
+			
+		}
+		else {
+			for (AbstractFileInfo metadata : metadataList) {
+				if (metadata.getRelativePath().equals(relativePath)) {
+					if (metadata instanceof SharedEmptyFolder) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public AbstractFileInfo generateMetadataForFile(String filename) throws NoSuchAlgorithmException, IOException {
+		return generateSharedFileinfo(new File(filename));
+	}
+	
+	public AbstractFileInfo generateMetadataForFolder(String filename) {
+//		System.out.println(filename);
+		AbstractFileInfo emptyFolder = generateSharedEmptyFolder(new File(getRelativeProgramPath(filename)));
+//		System.out.println(emptyFolder);
+		metadataList.add(emptyFolder);
+		return emptyFolder;
+	}
+
+	public AbstractFileInfo deleteFileMetadata(String relativePath) throws MetadataNotFound {
 		for (AbstractFileInfo metadata : metadataList) {
-			if (metadata.getRelativePath().equals(name)) {
+			if (metadata.getRelativePath().equals(File.separator + relativePath)) {
 				metadataList.remove(metadata);
 				return metadata;
 			}
 		}
-		throw new RuntimeException("no metadata, when deleting it");
+		throw new MetadataNotFound(relativePath);
 	}
 
-	public void addMetadata(AbstractFileInfo addedMatadata) {
-		metadataList.add(addedMatadata);
+	public AbstractFileInfo deleteFolderMetadata(String relativePath) throws MetadataNotFound {
+//		System.out.println("Main: " + relativePath);
+		for (AbstractFileInfo metadata : metadataList) {
+//			System.out.println(metadata.getRelativePath());
+			if (metadata.getRelativePath().startsWith(File.separator + relativePath)) {
+				metadataList.remove(metadata);
+//				return metadata;
+			}
+		}
+		throw new MetadataNotFound(relativePath);
 	}
+
+	public AbstractFileInfo updateMetadataForFile(String relativePath) throws NoSuchAlgorithmException, IOException, MetadataNotFound {
+		System.out.println("Main: " + relativePath);
+		relativePath = File.separator + relativePath;
+		for (AbstractFileInfo metadata : metadataList) {
+//			System.out.println(metadata.getRelativePath());
+			if (metadata.getRelativePath().equals(relativePath)) {
+				File file = new File(getRelativeProgramPath(relativePath));
+//				System.out.println(getRelativeProgramPath(relativePath));
+				((SharedFile)metadata).setMd5sum(HashGenerator.sha1(file));
+				((SharedFile)metadata).setSize(file.getTotalSpace());
+				return metadata;
+			}
+		}
+		throw new MetadataNotFound(relativePath);
+	}
+
+	public AbstractFileInfo updateMetadataForFile(String oldRelativePath, String newRelativePath) throws MetadataNotFound {
+//		System.out.println("Old: " + oldRelativePath + " New: " + newRelativePath);
+		oldRelativePath = File.separator + oldRelativePath;
+		newRelativePath = File.separator + newRelativePath;
+		for (AbstractFileInfo metadata : metadataList) {
+			if (metadata.getRelativePath().equals(oldRelativePath)) {
+				metadata.setRelativePath(newRelativePath);
+//				System.out.println(metadata);
+				return metadata;
+			}
+			if (metadata.getRelativePath().startsWith(oldRelativePath + File.separator)) {
+				metadata.setRelativePath(newRelativePath + metadata.getRelativePath().substring(newRelativePath.length()));
+//				System.out.println(metadata);
+				return metadata;
+			}
+		}
+		throw new MetadataNotFound(oldRelativePath);	
+	}
+
+	
 }
