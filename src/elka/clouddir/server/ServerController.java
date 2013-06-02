@@ -201,10 +201,15 @@ public class ServerController {
             @Override
             public void process(ServerEvent event) throws Exception {
                 FilePathChangedEvent filePathChangedEvent = (FilePathChangedEvent)event;
-                AbstractFileInfo meta = findFileByName(filePathChangedEvent.getRenameInfo().getOldPath());
+                String oldPath = filePathChangedEvent.getRenameInfo().getOldPath();
+                String newPath = filePathChangedEvent.getRenameInfo().getNewPath();
+                AbstractFileInfo meta = findFileByName(oldPath);
                 if(meta != null) {
-                    meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
-                    //TODO rename the physical file
+                    String from = meta.getServerPath(filePathChangedEvent.getSenderThread().getUser().getUserGroup());
+                    meta.setRelativePath(newPath);
+                    String to = meta.getServerPath(filePathChangedEvent.getSenderThread().getUser().getUserGroup());
+                    FileControler.moveFile(from, to);
+
                     filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed"));
                     //send further
