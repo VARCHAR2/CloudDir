@@ -2,10 +2,7 @@ package elka.clouddir.server.communication;
 
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.serverevents.*;
-import elka.clouddir.shared.LoginInfo;
-import elka.clouddir.shared.Message;
-import elka.clouddir.shared.RenameInfo;
-import elka.clouddir.shared.TransmissionEnd;
+import elka.clouddir.shared.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -100,7 +97,7 @@ public class ClientCommunicationThread extends Thread
                 return new FilePathChangedEvent(this, renameInfo);
             }
             case FULL_METADATA_TRANSFER: {
-                AbstractFileInfo[] metadata = (AbstractFileInfo[]) in.readObject();
+                FilesMetadata metadata = (FilesMetadata) in.readObject();
                 return new FullMetadataTransferEvent(this, metadata);
             }
             case FILE_TRANSFER:
