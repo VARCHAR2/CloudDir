@@ -4,6 +4,7 @@ import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.serverevents.*;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
+import elka.clouddir.shared.RenameInfo;
 import elka.clouddir.shared.TransmissionEnd;
 
 import java.io.IOException;
@@ -91,8 +92,8 @@ public class ClientCommunicationThread extends Thread
                 return new FileDeletedEvent(this, metadata);
             }
             case FILEPATH_CHANGED: {
-                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
-                return new FilePathChangedEvent(this, metadata);
+                RenameInfo renameInfo = (RenameInfo) in.readObject();
+                return new FilePathChangedEvent(this, renameInfo);
             }
             case FULL_METADATA_TRANSFER: {
                 AbstractFileInfo[] metadata = (AbstractFileInfo[]) in.readObject();

@@ -4,6 +4,7 @@ package elka.clouddir.server;
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.exception.LoginFailedException;
 import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
@@ -196,6 +197,37 @@ public class ServerController {
                 }
             }
         });
+        procMap.put(FilePathChangedEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws Exception {
+//                FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
+//                if(fileChangedEvent.getMetadata().getClass() == SharedFile.class) {
+//
+//                    SharedFile metadata = (SharedFile)fileChangedEvent.getMetadata();
+//
+//                    AbstractFileInfo changedFile = findFileByMD5(metadata);
+//                    if(changedFile != null) {
+//                        if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
+//                            //OK - updating file
+//                            //set new metadata
+//                            uncommitedFiles.put(metadata, changedFile);
+//                            //send request
+//                            fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
+//                            fileChangedEvent.getSenderThread().sendObject(metadata);
+//                        } else {
+//                            //conflict
+//                            fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
+//                        }
+//                    } else {
+//                        //new file
+//                        System.out.println("Error. FILEPATH_CHANGED send for unexisting file");
+//                        fileChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+//                    }
+//                } else {
+//                    //sent for SharedEmptyFolder
+//                }
+            }
+        });
         procMap.put(FullMetadataTransferEvent.class, new ServerEventProcessingStrategy() {
             @Override
             public void process(ServerEvent event) throws Exception {
@@ -231,6 +263,17 @@ public class ServerController {
         }
         return null;
     }
+
+//    private SharedFile findFileByMD5(SharedFile fileInfo) {
+//        for(AbstractFileInfo file : filesList) {
+//            if(file.getClass() == SharedFile.class) {
+//                if(((SharedFile)file).getMd5sum().equals(fileInfo.getMd5sum())) {
+//                    return (SharedFile)file;
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
 
     /**
