@@ -39,7 +39,7 @@ public class LocalFileChangedListener implements Runnable {
 	private String folderPath = "testFolder";
 	private List<AbstractFileInfo> listOfFiles;
 	
-	private Map<String, AbstractFileInfo> metadataMap;
+	private List<AbstractFileInfo> metadataList;
 	
     /**
      * Creates a WatchService and registers the given directory
@@ -48,7 +48,7 @@ public class LocalFileChangedListener implements Runnable {
 			BlockingQueue<ClientEvent> clientEventQueue) throws IOException {
 		
 		this.clientEventQueue = clientEventQueue;
-		metadataMap = new HashMap<String, AbstractFileInfo>();
+		metadataList = new ArrayList<AbstractFileInfo>();
 	
 	}
 
@@ -165,7 +165,7 @@ public class LocalFileChangedListener implements Runnable {
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
 		String relativePath = folder.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
 		SharedEmptyFolder folderMetadata = new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan", null);
-		metadataMap.put(relativePath, folderMetadata);
+		metadataList.add(folderMetadata);
 
 		return folderMetadata; // TODO implement setting username to a file
 	}
@@ -181,7 +181,7 @@ public class LocalFileChangedListener implements Runnable {
 		String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
 		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", 
 				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null);
-		metadataMap.put(relativePath, fileMetadata);
+		metadataList.add(fileMetadata);
 
 		return fileMetadata; // TODO implement setting username to a file
 	}
@@ -194,22 +194,14 @@ public class LocalFileChangedListener implements Runnable {
 	 * @throws NoSuchAlgorithmException 
 	 */
 	public AbstractFileInfo getMetadata(String name) throws NoSuchAlgorithmException, IOException {
-		
-		if (!metadataMap.containsKey(name)) {
-			File file = new File(getRelativeProgramPath(name));
-			if (file.isDirectory()) {
-				return generateSharedEmptyFolder(file);
-			}
-			else {
-				return generateSharedFileinfo(file);
+		for (AbstractFileInfo metadata : metadataList) {
+			if (metadata.getRelativePath().equals(name)) {
+				return metadata;
 			}
 		}
-		else {
-			return metadataMap.get(name);			
-		}
-
+		throw new RuntimeException("no metadata, when getting it out");
 	}
-
+	
 	/**
 	 * Returns file in array of bytes
 	 * @param name
@@ -223,5 +215,31 @@ public class LocalFileChangedListener implements Runnable {
 	
 	private String getRelativeProgramPath(String path) {
 		return folderPath + File.separator + path;
+	}
+
+	public AbstractFileInfo addMetadata(String name) throws NoSuchAlgorithmException, IOException {
+		
+		File file = new File(getRelativeProgramPath(name));
+		if (file.isDirectory()) {
+			return generateSharedEmptyFolder(file);
+		}
+		else {
+			return generateSharedFileinfo(file);
+		}
+		
+	}
+
+	public AbstractFileInfo deleteMetadata(String name) {
+		for (AbstractFileInfo metadata : metadataList) {
+			if (metadata.getRelativePath().equals(name)) {
+				metadataList.remove(metadata);
+				return metadata;
+			}
+		}
+		throw new RuntimeException("no metadata, when deleting it");
+	}
+
+	public void addMetadata(AbstractFileInfo addedMatadata) {
+		metadataList.add(addedMatadata);
 	}
 }

@@ -19,6 +19,7 @@ import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
 import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.client.clientEvents.LoginRequestEvent;
 import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
@@ -61,6 +62,7 @@ public class ClientController {
 	 * Initialization of strategy map
 	 */
 	private void initStrategyMap() {
+		
 		strategyMap = new HashMap<Class<? extends ClientEvent>, ClientController.Strategy>();
 		
 		strategyMap.put(LoginRequestEvent.class, new LoginRequestStrategy());
@@ -191,7 +193,8 @@ public class ClientController {
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
 				// TODO implement sending info about the renamed file
-				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileCreatedEvent.getName()));
+				AbstractFileInfo addedMetadata = localFileSystemListener.addMetadata(fileCreatedEvent.getName());
+				serverCommunicationThread.sendObject(addedMetadata);
 				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -211,8 +214,11 @@ public class ClientController {
 			System.out.println("File: " + fileModifiedEvent.getName() + " is modified");
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
-				// TODO implement sending info about the renamed file
-				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileModifiedEvent.getName()));
+				localFileSystemListener.deleteMetadata(fileModifiedEvent.getName());
+				AbstractFileInfo modifiedMetadata = localFileSystemListener.addMetadata(fileModifiedEvent.getName());
+//				modifiedFileMetadata.setRelativePath(fileModifiedEvent.getName());
+//				localFileSystemListener.addMetadata(modifiedFileMetadata);
+				serverCommunicationThread.sendObject(modifiedMetadata);
 				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileModifiedEvent.getName()));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -233,6 +239,9 @@ public class ClientController {
 			System.out.println("File: " + fileRenamedEvent.getOldName() + " -> " + fileRenamedEvent.getNewName());
 			try {
 				serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
+				AbstractFileInfo renamedFileMetadata = localFileSystemListener.deleteMetadata(fileRenamedEvent.getOldName());
+				renamedFileMetadata.setRelativePath(fileRenamedEvent.getNewName());
+				localFileSystemListener.addMetadata(renamedFileMetadata);
 				// TODO implement sending info about the renamed file
 				serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
 //				updateMetadataMap(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName());
@@ -252,15 +261,12 @@ public class ClientController {
 			System.out.println("File: " + fileDeletedEvent.getName() + " is deleted");
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
-				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileDeletedEvent.getName()));
+				AbstractFileInfo deletedFileMetadata = localFileSystemListener.deleteMetadata(fileDeletedEvent.getName());
+				serverCommunicationThread.sendObject(deletedFileMetadata);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+			}			
 		}
 		
 	}
