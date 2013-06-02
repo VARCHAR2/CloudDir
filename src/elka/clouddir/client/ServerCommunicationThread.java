@@ -7,7 +7,9 @@ import java.util.concurrent.BlockingQueue;
 import elka.clouddir.client.clientEvents.ClientEvent;
 import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
 import elka.clouddir.client.clientEvents.LoginRejectedEvent;
+import elka.clouddir.client.clientEvents.ServerResponseEvent;
 import elka.clouddir.shared.Message;
+import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
  * Class for communication with server
@@ -57,7 +59,7 @@ public class ServerCommunicationThread extends Thread {
                 running = false;
                 System.out.println("Server disconnected");
             } catch (UnsupportedOperationException | ClassCastException e ) {
-                System.out.println(e.getMessage());
+                System.out.println("[Error:] " + e.getMessage());
             } catch (Exception e) {
                 running = false;
                 e.printStackTrace();
@@ -102,6 +104,9 @@ public class ServerCommunicationThread extends Thread {
 				return new LoginAcceptedEvent();
 			case LOGIN_FAILED:
 				return new LoginRejectedEvent();
+            case SERVER_RESPONSE:
+                ServerResponse response = (ServerResponse) in.readObject();
+                return new ServerResponseEvent(response);
 			default:
 				throw new UnsupportedOperationException("Operation not implemented " + message.toString());
     	}

@@ -4,7 +4,6 @@ package elka.clouddir.server;
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.exception.LoginFailedException;
 import elka.clouddir.server.model.AbstractFileInfo;
-import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.server.model.User;
 import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
@@ -16,7 +15,6 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.serverevents.ClientConnectEvent;
 import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
@@ -25,6 +23,7 @@ import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
+import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
  * Kontroler serwera
@@ -46,7 +45,7 @@ public class ServerController {
 
     private FilesMetadata filesMetadata;
 
-    private Map<AbstractFileInfo, AbstractFileInfo> uncommitedFiles;
+//    private Map<AbstractFileInfo, AbstractFileInfo> uncommitedFiles;
 
     private int MAX_CLIENTS = 10;
 
@@ -77,7 +76,7 @@ public class ServerController {
 
         threads = new LinkedList<>();
 
-        uncommitedFiles = new HashMap<>();
+//        uncommitedFiles = new HashMap<>();
 
         filesMetadata = new FilesMetadata(new ArrayList<AbstractFileInfo>());
 
@@ -158,20 +157,34 @@ public class ServerController {
                     if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
                         //OK - updating file
                         //set new metadata
-                        uncommitedFiles.put(metadata, changedFile);
+//                        uncommitedFiles.put(metadata, changedFile);
                         //send request
-                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
-                        fileChangedEvent.getSenderThread().sendObject(metadata);
+//                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
+//                        fileChangedEvent.getSenderThread().sendObject(metadata);
+                        deletePhysicalFile(changedFile.getRelativePath());
+                        filesMetadata.getFilesMetaList().remove(changedFile);
+
+                        addFile(metadata, fileChangedEvent.getData());
+
+                        fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
+                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("File update correct"));
                     } else {
                         //conflict
-                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
+//                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
+                        metadata.setRelativePath(metadata.getRelativePath() + ".conflicted" + new Date().toString());
+                        addFile(metadata, fileChangedEvent.getData());
+
+                        fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
+                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("Conflict detected - file saved under a new name"));
                     }
                 } else {
                     //new file
-                    metadata.setLastUploadTime(new Date());
-                    uncommitedFiles.put(metadata, null);
-                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
-                    fileChangedEvent.getSenderThread().sendObject(metadata);
+                    addFile(metadata, fileChangedEvent.getData());
+                    fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
+                    fileChangedEvent.getSenderThread().sendObject(new ServerResponse("A new file added"));
+//                    uncommitedFiles.put(metadata, null);
+//                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
+//                    fileChangedEvent.getSenderThread().sendObject(metadata);
                 }
             }
         });
@@ -183,6 +196,8 @@ public class ServerController {
                 if(meta != null) {
                     meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
                     //TODO rename the physical file
+                    filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
+                    filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed"));
                 } else {
                     System.out.println("Trying to change the path of the non-existent file");
                     filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
@@ -195,24 +210,24 @@ public class ServerController {
                 //TODO
             }
         });
-        procMap.put(FileTransferEvent.class, new ServerEventProcessingStrategy() {
-            @Override
-            public void process(ServerEvent event) throws Exception {
-                FileTransferEvent fileTransferEvent = (FileTransferEvent)event;
-                AbstractFileInfo newMeta = fileTransferEvent.getMetadata();
-                if(uncommitedFiles.containsKey(newMeta)) {
-                    //replace file
-                    AbstractFileInfo oldMeta = uncommitedFiles.get(newMeta);
-                    filesMetadata.getFilesMetaList().remove(oldMeta);
-                    filesMetadata.getFilesMetaList().add(newMeta);
-                    uncommitedFiles.remove(newMeta);
-                    //TODO save physical file data
-                } else {
-                    //something's wrong
-                    fileTransferEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
-                }
-            }
-        });
+//        procMap.put(FileTransferEvent.class, new ServerEventProcessingStrategy() {
+//            @Override
+//            public void process(ServerEvent event) throws Exception {
+//                FileTransferEvent fileTransferEvent = (FileTransferEvent)event;
+//                AbstractFileInfo newMeta = fileTransferEvent.getMetadata();
+//                if(uncommitedFiles.containsKey(newMeta)) {
+//                    //replace file
+//                    AbstractFileInfo oldMeta = uncommitedFiles.get(newMeta);
+//                    filesMetadata.getFilesMetaList().remove(oldMeta);
+//                    filesMetadata.getFilesMetaList().add(newMeta);
+//                    uncommitedFiles.remove(newMeta);
+//                    //TODO save physical file data
+//                } else {
+//                    //something's wrong
+//                    fileTransferEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+//                }
+//            }
+//        });
     }
 
 
@@ -260,5 +275,21 @@ public class ServerController {
         }
         throw new LoginFailedException("User not registered in the system");
     }
+
+    private void addFile(AbstractFileInfo metadata, byte[] data) {
+        metadata.setLastUploadTime(new Date());
+        filesMetadata.getFilesMetaList().add(metadata);
+        savePhysicalFile(metadata.getRelativePath(), data);
+    }
+
+
+    private void savePhysicalFile(String name, byte[] data) {
+        System.out.println("Here, the file should be saved (not implemented yet)");
+    }
+
+    private void deletePhysicalFile(String name) {
+        System.out.println("Here, the file should be saved (not implemented yet)");
+    }
+
 
 }

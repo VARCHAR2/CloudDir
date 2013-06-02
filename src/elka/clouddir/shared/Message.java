@@ -12,7 +12,8 @@ public enum Message {
 	FILE_TRANSFER("File transfer"),
     CONFLICT_DETECTED("Conflict detected"),
     FILE_BEING_UPDATED("File being updated"),
-    INTERNAL_SERVER_ERROR("Internal server error");
+    INTERNAL_SERVER_ERROR("Internal server error"),
+    SERVER_RESPONSE("Server response");
 	
 	private String messageName;
 	

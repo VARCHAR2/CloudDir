@@ -7,7 +7,13 @@ import elka.clouddir.server.model.AbstractFileInfo;
  * Zmieniono plik
  */
 public class FileChangedEvent extends FileEvent {
-    public FileChangedEvent(ClientCommunicationThread senderThread, AbstractFileInfo metadata) {
+    private final byte[] data;
+    public FileChangedEvent(ClientCommunicationThread senderThread, AbstractFileInfo metadata, byte[] data) {
         super(senderThread, metadata);
+        this.data = data;
+    }
+
+    public byte[] getData() {
+        return data;
     }
 }

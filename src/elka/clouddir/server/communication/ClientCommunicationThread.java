@@ -6,8 +6,6 @@ import elka.clouddir.shared.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -84,7 +82,8 @@ public class ClientCommunicationThread extends Thread
                 return new LoginRequestEvent(this, loginInfo);
             case FILE_CHANGED: {
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
-                return new FileChangedEvent(this, metadata);
+                byte[] data = (byte[]) in.readObject();
+                return new FileChangedEvent(this, metadata, data);
             }
             case FILE_DELETED: {
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
@@ -98,10 +97,10 @@ public class ClientCommunicationThread extends Thread
                 FilesMetadata metadata = (FilesMetadata) in.readObject();
                 return new FullMetadataTransferEvent(this, metadata);
             }
-            case FILE_TRANSFER:
-                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
-                byte[] data = (byte[]) in.readObject();
-                return new FileTransferEvent(this, metadata, data);
+//            case FILE_TRANSFER:
+//                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+//                byte[] data = (byte[]) in.readObject();
+//                return new FileTransferEvent(this, metadata, data);
             default:
                 throw new UnsupportedOperationException("Operation not implemented");
         }

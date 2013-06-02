@@ -10,20 +10,14 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import elka.clouddir.client.clientEvents.ClientEvent;
-import elka.clouddir.client.clientEvents.FileCreatedEvent;
-import elka.clouddir.client.clientEvents.FileDeletedEvent;
-import elka.clouddir.client.clientEvents.FileModifiedEvent;
-import elka.clouddir.client.clientEvents.FileRenamedEvent;
-import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
-import elka.clouddir.client.clientEvents.LoginRejectedEvent;
-import elka.clouddir.client.clientEvents.LoginRequestEvent;
+import elka.clouddir.client.clientEvents.*;
 import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.RenameInfo;
+import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
  * Controller of the client
@@ -73,6 +67,8 @@ public class ClientController {
 		strategyMap.put(FileModifiedEvent.class, new FileModifiedStrategy());
 		strategyMap.put(FileRenamedEvent.class, new FileRenamedStrategy());
 		strategyMap.put(FileDeletedEvent.class, new FileDeletedStrategy());
+
+        strategyMap.put(ServerResponseEvent.class, new ServerResponseStrategy());
 		
 	}
 
@@ -270,7 +266,16 @@ public class ClientController {
 		}
 		
 	}
-	
+
+    class ServerResponseStrategy extends Strategy {
+
+        @Override
+        void perform(ClientEvent clientEvent) {
+            System.out.println("[Server response:] " +
+                    ((ServerResponseEvent)clientEvent).getServerResponse().getMessage());
+        }
+    }
+
 	public static void main(String[] args) {
 		new ClientController().loop();
 	}

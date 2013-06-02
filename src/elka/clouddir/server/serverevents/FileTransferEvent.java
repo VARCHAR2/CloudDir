@@ -6,6 +6,7 @@ import elka.clouddir.server.model.AbstractFileInfo;
 /**
  * File transfer event
  */
+@Deprecated
 public class FileTransferEvent extends FileEvent {
     private final byte[] data;
 
