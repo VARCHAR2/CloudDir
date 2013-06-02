@@ -67,20 +67,6 @@ public class ServerController {
     }
 
     boolean         running;
-//
-//    ServerController() throws Exception {
-//        /* initialize connection */
-//        active = true;
-//        listen();
-//    }
-//
-//    void listen() throws Exception {
-//        while ( active ) {
-//            Socket clientSocket = serverSocket.accept();
-//            threads[ size++ ] = new ClientThread( clientSocket );
-//            threads[ size - 1 ].start();
-//        }
-//    }
 
     public ServerController() throws IOException {
 
@@ -102,16 +88,6 @@ public class ServerController {
         new Thread(connectionReceiver).start();
     }
 
-//
-//    void listen() throws IOException {
-//
-//        running = true;
-//        while(running) {
-//            Socket clientSocket = serverSocket.accept();
-//            threads[threads.length] = new ClientCommunicationThread(clientSocket);
-//            threads[threads.length - 1].start();
-//        }
-//    }
 
     public void loop() {
         while(true) {
@@ -242,16 +218,6 @@ public class ServerController {
         return null;
     }
 
-//    private SharedFile findFileByMD5(SharedFile fileInfo) {
-//        for(AbstractFileInfo file : filesList) {
-//            if(file.getClass() == SharedFile.class) {
-//                if(((SharedFile)file).getMd5sum().equals(fileInfo.getMd5sum())) {
-//                    return (SharedFile)file;
-//                }
-//            }
-//        }
-//        return null;
-//    }
 
 
     /**
