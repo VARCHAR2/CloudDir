@@ -77,10 +77,10 @@ public class ClientCommunicationThread extends Thread
 
 
     private ServerEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
+        System.out.println("Received message \"" + message.toString() + "\"");
         switch (message) {
             case LOGIN_REQUEST:
                 LoginInfo loginInfo = (LoginInfo) in.readObject();
-                System.out.println("LOGIN_REQUEST transmitted");
                 return new LoginRequestEvent(this, loginInfo);
             case FILE_CHANGED: {
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
@@ -93,6 +93,10 @@ public class ClientCommunicationThread extends Thread
             case FILEPATH_CHANGED: {
                 AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
                 return new FilePathChangedEvent(this, metadata);
+            }
+            case FULL_METADATA_TRANSFER: {
+                AbstractFileInfo[] metadata = (AbstractFileInfo[]) in.readObject();
+                return new FullMetadataTransferEvent(this, metadata);
             }
 
             default:

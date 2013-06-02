@@ -119,7 +119,7 @@ public class ClientController {
 			    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
 			    String login = bufferRead.readLine();
 		 
-			    System.out.println("Password: ");
+			    System.out.print("Password: ");
 			    String password = bufferRead.readLine();
 			    serverCommunicationThread.sendMessage(Message.LOGIN_REQUEST);
 			    serverCommunicationThread.sendObject(new LoginInfo(login, password));
@@ -148,6 +148,7 @@ public class ClientController {
 			try {
 				List<AbstractFileInfo> metadataArray = localFileSystemListener.getSystemMetadata();
 				FilesMetadata filesMetadata = new FilesMetadata(metadataArray.toArray(new AbstractFileInfo[0]));
+                System.out.println("Login OK");
 				serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
 				serverCommunicationThread.sendObject(filesMetadata);
 //				for (AbstractFileInfo abstractFileInfo : abstractFileInfos) {
