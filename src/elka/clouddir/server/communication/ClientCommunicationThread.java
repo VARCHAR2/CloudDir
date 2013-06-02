@@ -7,10 +7,7 @@ import elka.clouddir.shared.Message;
 import elka.clouddir.shared.RenameInfo;
 import elka.clouddir.shared.TransmissionEnd;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,10 +54,17 @@ public class ClientCommunicationThread extends Thread
 
                 //ok - wyślij do serwera
                 serverEventQueue.put(event);
-            } catch (Exception e) {
-            	running = false;
-//                e.printStackTrace();
-            	System.out.println("Connection was closed");
+            } catch (EOFException e) {
+                running = false;
+                System.out.println("Transmission ended, connection closed");
+            } catch (ClassCastException | ClassNotFoundException e) {
+                System.out.println("Received incompatible object");
+            } catch (InterruptedException e) {
+                running = false;
+                System.out.println("Thread interrupted");
+            } catch (IOException e) {
+                running = false;
+                System.out.println("IO exception");
             }
 
         }
