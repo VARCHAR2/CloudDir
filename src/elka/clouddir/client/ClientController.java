@@ -22,6 +22,7 @@ import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
+import elka.clouddir.shared.RenameInfo;
 
 /**
  * Controller of the client
@@ -185,8 +186,16 @@ public class ClientController {
 		
 		@Override
 		void perform(ClientEvent clientEvent) {
-			// TODO implement sending info about the created file			
-		}
+			FileCreatedEvent fileCreatedEvent = (FileCreatedEvent) clientEvent;
+			try {
+				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
+				// TODO implement sending info about the renamed file
+				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileCreatedEvent.getName()));
+				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}		}
 		
 	}
 	
@@ -194,7 +203,16 @@ public class ClientController {
 		
 		@Override
 		void perform(ClientEvent clientEvent) {
-			// TODO implement sending info about the modified file			
+			FileModifiedEvent fileModifiedEvent = (FileModifiedEvent) clientEvent;
+			try {
+				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
+				// TODO implement sending info about the renamed file
+				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileModifiedEvent.getName()));
+				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileModifiedEvent.getName()));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 	}
@@ -205,13 +223,13 @@ public class ClientController {
 		void perform(ClientEvent clientEvent) {
 			FileRenamedEvent fileRenamedEvent = (FileRenamedEvent) clientEvent;
 			try {
-				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
+				serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
 				// TODO implement sending info about the renamed file
-//				serverCommunicationThread.sendObject(fileRenamedEvent.getOldName());
+				serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}			
+			}
 		}
 		
 	}
@@ -223,7 +241,7 @@ public class ClientController {
 			FileDeletedEvent fileDeletedEvent = (FileDeletedEvent) clientEvent;
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
-				serverCommunicationThread.sendObject(fileDeletedEvent.getName());
+				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileDeletedEvent.getName()));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

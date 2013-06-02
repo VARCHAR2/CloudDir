@@ -2,9 +2,15 @@ package elka.clouddir.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import net.contentobjects.jnotify.JNotify;
@@ -33,6 +39,8 @@ public class LocalFileChangedListener implements Runnable {
 	private String folderPath = "testFolder";
 	private List<AbstractFileInfo> listOfFiles;
 	
+	private Map<String, AbstractFileInfo> metadataMap;
+	
     /**
      * Creates a WatchService and registers the given directory
      */
@@ -40,6 +48,7 @@ public class LocalFileChangedListener implements Runnable {
 			BlockingQueue<ClientEvent> clientEventQueue) throws IOException {
 		
 		this.clientEventQueue = clientEventQueue;
+		metadataMap = new HashMap<String, AbstractFileInfo>();
 	
 	}
 
@@ -154,7 +163,11 @@ public class LocalFileChangedListener implements Runnable {
 	 * @return
 	 */
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
-		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan", null); // TODO implement setting username to a file
+		String relativePath = folder.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
+		SharedEmptyFolder folderMetadata = new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan", null);
+		metadataMap.put(relativePath, folderMetadata);
+
+		return folderMetadata; // TODO implement setting username to a file
 	}
 
 	/**
@@ -165,7 +178,20 @@ public class LocalFileChangedListener implements Runnable {
 	 * @throws IOException
 	 */
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
-		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), "bogdan", 
-				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null); // TODO implement setting username to a file
+		String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
+		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", 
+				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null);
+		metadataMap.put(relativePath, fileMetadata);
+
+		return fileMetadata; // TODO implement setting username to a file
+	}
+
+	public AbstractFileInfo getMetadata(String name) {
+		return metadataMap.get(name);
+	}
+
+	public Serializable getFile(String name) throws IOException {
+	    Path path = Paths.get(folderPath + File.separator + name);
+	    return Files.readAllBytes(path);
 	}
 }
