@@ -1,8 +1,10 @@
 package elka.clouddir.server.communication;
 
 import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.server.model.User;
 import elka.clouddir.server.serverevents.*;
 import elka.clouddir.shared.*;
+import elka.clouddir.shared.protocol.ServerResponse;
 
 import java.io.*;
 import java.net.Socket;
@@ -18,6 +20,8 @@ public class ClientCommunicationThread extends Thread
     private final   ObjectInputStream   in;
 
     private final BlockingQueue<ServerEvent> serverEventQueue;
+
+    private User user = null;
 
     private         boolean             running;
 
@@ -38,8 +42,13 @@ public class ClientCommunicationThread extends Thread
                 //pobranie dodatkowych danych
                 ServerEvent event = processMessage(message);
 
-                //ok - wyślij do serwera
-                serverEventQueue.put(event);
+                //jeśli zalogowany, lub chce się logować - ślij dalej
+                if(message == Message.LOGIN_REQUEST || isLogged()) {
+                    //ok - wyślij do serwera
+                    serverEventQueue.put(event);
+                } else {
+                    System.out.println("Message dropped (user not logged in)");
+                }
             } catch (EOFException e) {
                 running = false;
                 System.out.println("Transmission ended, connection closed");
@@ -58,6 +67,8 @@ public class ClientCommunicationThread extends Thread
         try {
             in.close();
             out.close();
+            user.setLoggedIn(false);
+            user = null;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -76,6 +87,8 @@ public class ClientCommunicationThread extends Thread
 
     private ServerEvent processMessage(final Message message) throws IOException, ClassNotFoundException, InterruptedException {
         System.out.println("Received message \"" + message.toString() + "\"");
+
+
         switch (message) {
             case LOGIN_REQUEST:
                 LoginInfo loginInfo = (LoginInfo) in.readObject();
@@ -107,4 +120,15 @@ public class ClientCommunicationThread extends Thread
     }
 
 
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public boolean isLogged() {
+        return user != null && user.isLoggedIn();
+    }
 }

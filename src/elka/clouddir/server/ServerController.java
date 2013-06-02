@@ -84,8 +84,8 @@ public class ServerController {
 
         serverSocket = new ServerSocket(PORT);
         connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
-        
-        
+
+
         new Thread(connectionReceiver).start();
     }
 
@@ -129,14 +129,15 @@ public class ServerController {
         procMap.put(LoginRequestEvent.class, new ServerEventProcessingStrategy() {
             @Override
             public void process(ServerEvent event) throws IOException {
-                
+
             	LoginRequestEvent loginRequestEvent = (LoginRequestEvent) event;
                 Message result;
 
                 try {
-                    logUser(loginRequestEvent.getLoginInfo());
+                    User logged = logUser(loginRequestEvent.getLoginInfo());
                     System.out.println("Login OK");
                     result = Message.LOGIN_OK;
+                    loginRequestEvent.getSenderThread().setUser(logged);
                 } catch (LoginFailedException e) {
                     System.out.println(e.getMessage());
                     result = Message.LOGIN_FAILED;
@@ -152,6 +153,8 @@ public class ServerController {
                 FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
                 AbstractFileInfo metadata = fileChangedEvent.getMetadata();
 
+                UserGroup ownerGroup = fileChangedEvent.getSenderThread().getUser().getUserGroup();
+
                 AbstractFileInfo changedFile = findFileByName(metadata.getRelativePath());
                 if(changedFile != null) {
                     if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
@@ -164,7 +167,7 @@ public class ServerController {
                         deletePhysicalFile(changedFile.getRelativePath());
                         filesMetadata.getFilesMetaList().remove(changedFile);
 
-                        addFile(metadata, fileChangedEvent.getData());
+                        addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
                         fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                         fileChangedEvent.getSenderThread().sendObject(new ServerResponse("File update correct"));
@@ -172,14 +175,14 @@ public class ServerController {
                         //conflict
 //                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
                         metadata.setRelativePath(metadata.getRelativePath() + ".conflicted" + new Date().toString());
-                        addFile(metadata, fileChangedEvent.getData());
+                        addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
                         fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                         fileChangedEvent.getSenderThread().sendObject(new ServerResponse("Conflict detected - file saved under a new name"));
                     }
                 } else {
                     //new file
-                    addFile(metadata, fileChangedEvent.getData());
+                    addFile(ownerGroup, metadata, fileChangedEvent.getData());
                     fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileChangedEvent.getSenderThread().sendObject(new ServerResponse("A new file added"));
 //                    uncommitedFiles.put(metadata, null);
@@ -257,8 +260,9 @@ public class ServerController {
     /**
      * próbuje zalogować użytkownika
      * @param loginInfo
+     * @return logged user
      */
-    private void logUser(LoginInfo loginInfo) throws LoginFailedException {
+    private User logUser(LoginInfo loginInfo) throws LoginFailedException {
         for(User user : users) {
             if(user.getName().equals(loginInfo.getLogin())) {
                 if(user.getPassword().equals(loginInfo.getPassword())) {
@@ -266,7 +270,7 @@ public class ServerController {
                         throw new LoginFailedException("User already logged in");
                     } else { //OK
                         user.setLoggedIn(true);
-                        return; //OK
+                        return user; //OK
                     }
                 } else {
                     throw new LoginFailedException("Wrong password");
@@ -276,10 +280,10 @@ public class ServerController {
         throw new LoginFailedException("User not registered in the system");
     }
 
-    private void addFile(AbstractFileInfo metadata, byte[] data) {
+    private void addFile(UserGroup ownerGroup, AbstractFileInfo metadata, byte[] data) {
         metadata.setLastUploadTime(new Date());
         filesMetadata.getFilesMetaList().add(metadata);
-        savePhysicalFile(metadata.getRelativePath(), data);
+        savePhysicalFile(ownerGroup.getFilePath(metadata), data);
     }
 
 
@@ -290,6 +294,5 @@ public class ServerController {
     private void deletePhysicalFile(String name) {
         System.out.println("Here, the file should be saved (not implemented yet)");
     }
-
 
 }
