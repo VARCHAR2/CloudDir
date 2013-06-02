@@ -1,9 +1,6 @@
 package elka.clouddir.client;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 
@@ -56,16 +53,19 @@ public class ServerCommunicationThread extends Thread {
 
                 clientEventQueue.add(event);
     		}
+        } catch (EOFException e) {
+            System.out.println("Server disconnected");
     	} catch (Exception e) {
-            try {
-				in.close();
-				out.close();
-	            clientSocket.close();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
             e.printStackTrace();
+        }
+
+        try {
+            in.close();
+            out.close();
+            clientSocket.close();
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
         }
 
 
