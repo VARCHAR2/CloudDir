@@ -1,4 +1,4 @@
-package files;
+package elka.clouddir.shared;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +16,7 @@ public class FileControler {
 	 * @param data
 	 * Input format doc/case-study/projectX/file.pdf
 	 */
-	public void writeFile(String path, byte[] data){
+	public static void writeFile(String path, byte[] data){
 		try {
 			File f = new File(path);
 			File p = new File(f.getParent());
@@ -33,7 +33,7 @@ public class FileControler {
 		}
 	}
 	
-	public void deleteFile(String path){
+	public static void deleteFile(String path){
 		File f = new File(path);
 		if(f.isFile() && f.canWrite()){
 			f.delete();
@@ -43,7 +43,7 @@ public class FileControler {
 		}
 	}
 	
-	public byte[] loadFile(String path){
+	public static byte[] loadFile(String path){
 		File f = new File(path);
 		byte[] data = null;
 		
@@ -62,5 +62,23 @@ public class FileControler {
 			e.printStackTrace();
 		}
 		return data;
+	}
+	
+	
+	/**
+	 * @param from
+	 * @param to
+	 * Deals with all kinds of moving.
+	 */
+	public static void moveFile(String from, String to){
+		File source = new File(from);
+		File destination = new File(to);
+		
+		// What if we have to create destination directory first
+		File dirForTheFile = new File(destination.getParent());
+		if(!dirForTheFile.isDirectory()){
+			dirForTheFile.mkdirs();
+		}
+		source.renameTo(destination);
 	}
 }
