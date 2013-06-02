@@ -175,7 +175,7 @@ public class ServerController {
                 FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
                 AbstractFileInfo metadata = fileChangedEvent.getMetadata();
 
-                AbstractFileInfo changedFile = findFileByName(metadata);
+                AbstractFileInfo changedFile = findFileByName(metadata.getRelativePath());
                 if(changedFile != null) {
                     if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
                         //OK - updating file
@@ -200,32 +200,10 @@ public class ServerController {
         procMap.put(FilePathChangedEvent.class, new ServerEventProcessingStrategy() {
             @Override
             public void process(ServerEvent event) throws Exception {
-//                FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
-//                if(fileChangedEvent.getMetadata().getClass() == SharedFile.class) {
-//
-//                    SharedFile metadata = (SharedFile)fileChangedEvent.getMetadata();
-//
-//                    AbstractFileInfo changedFile = findFileByMD5(metadata);
-//                    if(changedFile != null) {
-//                        if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
-//                            //OK - updating file
-//                            //set new metadata
-//                            uncommitedFiles.put(metadata, changedFile);
-//                            //send request
-//                            fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
-//                            fileChangedEvent.getSenderThread().sendObject(metadata);
-//                        } else {
-//                            //conflict
-//                            fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
-//                        }
-//                    } else {
-//                        //new file
-//                        System.out.println("Error. FILEPATH_CHANGED send for unexisting file");
-//                        fileChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
-//                    }
-//                } else {
-//                    //sent for SharedEmptyFolder
-//                }
+                FilePathChangedEvent filePathChangedEvent = (FilePathChangedEvent)event;
+                AbstractFileInfo meta = findFileByName(filePathChangedEvent.getRenameInfo().getOldPath());
+                meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
+                //TODO rename the physical file
             }
         });
         procMap.put(FullMetadataTransferEvent.class, new ServerEventProcessingStrategy() {
@@ -255,9 +233,9 @@ public class ServerController {
     }
 
 
-    private AbstractFileInfo findFileByName(AbstractFileInfo fileInfo) {
+    private AbstractFileInfo findFileByName(final String name) {
         for(AbstractFileInfo file : filesList) {
-            if(file.getRelativePath().equals(fileInfo.getRelativePath())) {
+            if(file.getRelativePath().equals(name)) {
                 return file;
             }
         }
