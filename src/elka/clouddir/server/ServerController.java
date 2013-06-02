@@ -22,6 +22,7 @@ import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
+import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 
@@ -43,7 +44,7 @@ public class ServerController {
 
     private Map<Class<? extends ServerEvent>, ServerEventProcessingStrategy> procMap;
 
-    private List<AbstractFileInfo> filesList;
+    private FilesMetadata filesMetadata;
 
     private Map<AbstractFileInfo, AbstractFileInfo> uncommitedFiles;
 
@@ -67,20 +68,6 @@ public class ServerController {
     }
 
     boolean         running;
-//
-//    ServerController() throws Exception {
-//        /* initialize connection */
-//        active = true;
-//        listen();
-//    }
-//
-//    void listen() throws Exception {
-//        while ( active ) {
-//            Socket clientSocket = serverSocket.accept();
-//            threads[ size++ ] = new ClientThread( clientSocket );
-//            threads[ size - 1 ].start();
-//        }
-//    }
 
     public ServerController() throws IOException {
 
@@ -92,6 +79,7 @@ public class ServerController {
 
         uncommitedFiles = new HashMap<>();
 
+        filesMetadata = new FilesMetadata(new ArrayList<AbstractFileInfo>());
 
         connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
 
@@ -102,16 +90,6 @@ public class ServerController {
         new Thread(connectionReceiver).start();
     }
 
-//
-//    void listen() throws IOException {
-//
-//        running = true;
-//        while(running) {
-//            Socket clientSocket = serverSocket.accept();
-//            threads[threads.length] = new ClientCommunicationThread(clientSocket);
-//            threads[threads.length - 1].start();
-//        }
-//    }
 
     public void loop() {
         while(true) {
@@ -202,8 +180,13 @@ public class ServerController {
             public void process(ServerEvent event) throws Exception {
                 FilePathChangedEvent filePathChangedEvent = (FilePathChangedEvent)event;
                 AbstractFileInfo meta = findFileByName(filePathChangedEvent.getRenameInfo().getOldPath());
-                meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
-                //TODO rename the physical file
+                if(meta != null) {
+                    meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
+                    //TODO rename the physical file
+                } else {
+                    System.out.println("Trying to change the path of the non-existent file");
+                    filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+                }
             }
         });
         procMap.put(FullMetadataTransferEvent.class, new ServerEventProcessingStrategy() {
@@ -220,8 +203,8 @@ public class ServerController {
                 if(uncommitedFiles.containsKey(newMeta)) {
                     //replace file
                     AbstractFileInfo oldMeta = uncommitedFiles.get(newMeta);
-                    filesList.remove(oldMeta);
-                    filesList.add(newMeta);
+                    filesMetadata.getFilesMetaList().remove(oldMeta);
+                    filesMetadata.getFilesMetaList().add(newMeta);
                     uncommitedFiles.remove(newMeta);
                     //TODO save physical file data
                 } else {
@@ -234,7 +217,7 @@ public class ServerController {
 
 
     private AbstractFileInfo findFileByName(final String name) {
-        for(AbstractFileInfo file : filesList) {
+        for(AbstractFileInfo file : filesMetadata.getFilesMetaList()) {
             if(file.getRelativePath().equals(name)) {
                 return file;
             }
@@ -242,16 +225,6 @@ public class ServerController {
         return null;
     }
 
-//    private SharedFile findFileByMD5(SharedFile fileInfo) {
-//        for(AbstractFileInfo file : filesList) {
-//            if(file.getClass() == SharedFile.class) {
-//                if(((SharedFile)file).getMd5sum().equals(fileInfo.getMd5sum())) {
-//                    return (SharedFile)file;
-//                }
-//            }
-//        }
-//        return null;
-//    }
 
 
     /**

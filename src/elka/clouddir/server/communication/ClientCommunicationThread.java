@@ -23,12 +23,6 @@ public class ClientCommunicationThread extends Thread
 
     private         boolean             running;
 
-
-//    static Map<Message, MessageProcesser> processerMap;
-//    static {
-//        initMap();
-//    }
-
     public ClientCommunicationThread(Socket clientSocket, BlockingQueue<ServerEvent> serverEventQueue) throws IOException {
         this.serverEventQueue = serverEventQueue;
         out = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -45,9 +39,6 @@ public class ClientCommunicationThread extends Thread
 
                 //pobranie dodatkowych danych
                 ServerEvent event = processMessage(message);
-
-                //to po to, aby sprawdzić, że poprawnie zakończono transmisję
-//                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
 
                 //ok - wyślij do serwera
                 serverEventQueue.put(event);
