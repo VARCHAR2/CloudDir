@@ -127,7 +127,7 @@ public class ServerController {
     }
 
     /**
-     * Podłączenie nowego wątku
+     * Connect a new thread
      * @param clientSocket
      * @throws IOException
      */
@@ -161,19 +161,51 @@ public class ServerController {
                     result = Message.LOGIN_FAILED;
                 }
 
-                //wyślij komunikat zwrotny
+                //send back the message
                 loginRequestEvent.getSenderThread().sendObject(result);
             }
         });
         procMap.put(FileChangedEvent.class, new ServerEventProcessingStrategy() {
             @Override
-            public void process(ServerEvent event) {
+            public void process(ServerEvent event) throws IOException {
                 FileChangedEvent fileChangedEvent = (FileChangedEvent)event;
                 AbstractFileInfo metadata = fileChangedEvent.getMetadata();
-                //filesList.contains(metadata)
-                //FIXME
+
+                AbstractFileInfo changedFile = findFileByName(metadata);
+                if(changedFile != null) {
+                    if(changedFile.getLastModifiedBy().equals(metadata.getLastModifiedBy())) {
+                        //OK - updating file
+                        //FIXME update the metadata
+                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
+                        fileChangedEvent.getSenderThread().sendObject(metadata);
+                    } else {
+                        //conflict
+                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
+                    }
+                } else {
+                    //new file
+                    //FIXME add metadata
+                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
+                    fileChangedEvent.getSenderThread().sendObject(metadata);
+                }
             }
         });
+        procMap.put(FullMetadataTransferEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws Exception {
+                //TODO
+            }
+        });
+    }
+
+
+    private AbstractFileInfo findFileByName(AbstractFileInfo fileInfo) {
+        for(AbstractFileInfo file : filesList) {
+            if(file.getRelativePath().equals(fileInfo.getRelativePath())) {
+                return file;
+            }
+        }
+        return null;
     }
 
 

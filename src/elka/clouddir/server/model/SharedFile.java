@@ -3,22 +3,22 @@ package elka.clouddir.server.model;
 
 public class SharedFile extends AbstractFileInfo{
 
-	private String md4sum;
+	private String md5sum;
 	private long size;
 	
-	public SharedFile(String relativePath, long modified, String lastModifiedBy, String md4sum, long size) {
+	public SharedFile(String relativePath, long modified, String lastModifiedBy, String md5sum, long size) {
 		super(relativePath, modified, lastModifiedBy);
 		// TODO Auto-generated constructor stub
-		this.md4sum = md4sum;
+		this.md5sum = md5sum;
 		this.size = size;
 	}
 
-	public String getMd4sum() {
-		return md4sum;
+	public String getMd5sum() {
+		return md5sum;
 	}
 
-	public void setMd4sum(String md4sum) {
-		this.md4sum = md4sum;
+	public void setMd5sum(String md5sum) {
+		this.md5sum = md5sum;
 	}
 
 	public long getSize() {
@@ -31,7 +31,7 @@ public class SharedFile extends AbstractFileInfo{
 	
 	@Override
 	public String toString() {
-		return "File:\nMD4SUM: " + md4sum + "\nSize: " + size + "\n" + super.toString() + "\n";
+		return "File:\nMD5SUM: " + md5sum + "\nSize: " + size + "\n" + super.toString() + "\n";
 	}
 	
 }

@@ -9,7 +9,8 @@ public enum Message {
 	FILE_DELETED("File deleted"),
 	FILE_REQUEST("File request"),
 	FULL_METADATA_TRANSFER("Full metadata transfer"),
-	FILE_TRANSFER("File transfer");
+	FILE_TRANSFER("File transfer"),
+    CONFLICT_DETECTED("Conflict detected");
 	
 	private String messageName;
 	
