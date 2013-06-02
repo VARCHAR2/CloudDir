@@ -1,4 +1,4 @@
-package files;
+package elka.clouddir.shared;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,6 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Class for managing file I/O
+ * @author Lukasz Pielaszek
+ */
 public class FileControler {
 	
 	
@@ -16,7 +20,7 @@ public class FileControler {
 	 * @param data
 	 * Input format doc/case-study/projectX/file.pdf
 	 */
-	public void writeFile(String path, byte[] data){
+	public static void writeFile(String path, byte[] data){
 		try {
 			File f = new File(path);
 			File p = new File(f.getParent());
@@ -33,7 +37,7 @@ public class FileControler {
 		}
 	}
 	
-	public void deleteFile(String path){
+	public static void deleteFile(String path){
 		File f = new File(path);
 		if(f.isFile() && f.canWrite()){
 			f.delete();
@@ -43,7 +47,7 @@ public class FileControler {
 		}
 	}
 	
-	public byte[] loadFile(String path){
+	public static byte[] loadFile(String path){
 		File f = new File(path);
 		byte[] data = null;
 		

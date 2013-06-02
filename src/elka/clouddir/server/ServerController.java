@@ -21,6 +21,7 @@ import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
+import elka.clouddir.shared.FileControler;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
@@ -165,8 +166,9 @@ public class ServerController {
                         //send request
 //                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
 //                        fileChangedEvent.getSenderThread().sendObject(metadata);
-                        deletePhysicalFile(changedFile.getServerPath(ownerGroup));
-                        filesMetadata.getFilesMetaList().remove(changedFile);
+//                        deletePhysicalFile(changedFile.getServerPath(ownerGroup));
+//                        filesMetadata.getFilesMetaList().remove(changedFile);
+                        removeFile(ownerGroup, changedFile);
 
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
@@ -219,8 +221,9 @@ public class ServerController {
                 FileDeletedEvent fileDeletedEvent = (FileDeletedEvent)event;
                 AbstractFileInfo meta = findFileByName(fileDeletedEvent.getMetadata().getRelativePath());
                 if(meta != null) {
-                    filesMetadata.getFilesMetaList().remove(meta);
-                    deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
+//                    filesMetadata.getFilesMetaList().remove(meta);
+//                    deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
+                    removeFile(fileDeletedEvent.getSenderThread().getUser().getUserGroup(), meta);
                     fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted"));
                     //send further
@@ -325,16 +328,20 @@ public class ServerController {
     private void addFile(UserGroup ownerGroup, AbstractFileInfo metadata, byte[] data) {
         metadata.setLastUploadTime(new Date());
         filesMetadata.getFilesMetaList().add(metadata);
-        savePhysicalFile(metadata.getServerPath(ownerGroup), data);
+        FileControler.writeFile(metadata.getServerPath(ownerGroup), data);
     }
 
-
-    private void savePhysicalFile(String name, byte[] data) {
-        System.out.println("Here, the file should be saved (not implemented yet)");
+    private void removeFile(UserGroup ownerGroup, AbstractFileInfo metadata) {
+        FileControler.deleteFile(metadata.getServerPath(ownerGroup));
     }
 
-    private void deletePhysicalFile(String name) {
-        System.out.println("Here, the file should be saved (not implemented yet)");
-    }
+//
+//    private void savePhysicalFile(String name, byte[] data) {
+//        System.out.println("Here, the file should be saved (not implemented yet)");
+//    }
+//
+//    private void deletePhysicalFile(String name) {
+//        System.out.println("Here, the file should be saved (not implemented yet)");
+//    }
 
 }
