@@ -56,4 +56,13 @@ public abstract class AbstractFileInfo implements Serializable {
     public void setLastUploadTime(Date lastUploadTime) {
         this.lastUploadTime = lastUploadTime;
     }
+
+
+    /**
+     * Gets the absolute path of a file
+     */
+    public String getServerPath(final UserGroup owner) {
+        return owner.getSharedFolderPath() + "/" + relativePath;
+    }
+
 }

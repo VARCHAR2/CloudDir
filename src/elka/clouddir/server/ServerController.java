@@ -164,7 +164,7 @@ public class ServerController {
                         //send request
 //                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
 //                        fileChangedEvent.getSenderThread().sendObject(metadata);
-                        deletePhysicalFile(changedFile.getRelativePath());
+                        deletePhysicalFile(changedFile.getServerPath(ownerGroup));
                         filesMetadata.getFilesMetaList().remove(changedFile);
 
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
@@ -204,6 +204,22 @@ public class ServerController {
                 } else {
                     System.out.println("Trying to change the path of the non-existent file");
                     filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+                }
+            }
+        });
+        procMap.put(FileDeletedEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws Exception {
+                FileDeletedEvent fileDeletedEvent = (FileDeletedEvent)event;
+                AbstractFileInfo meta = findFileByName(fileDeletedEvent.getMetadata().getRelativePath());
+                if(meta != null) {
+                    filesMetadata.getFilesMetaList().remove(meta);
+                    deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
+                    fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
+                    fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted"));
+                } else {
+                    fileDeletedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+                    System.out.println("Error: deleted file doesn't exist");
                 }
             }
         });
@@ -283,7 +299,7 @@ public class ServerController {
     private void addFile(UserGroup ownerGroup, AbstractFileInfo metadata, byte[] data) {
         metadata.setLastUploadTime(new Date());
         filesMetadata.getFilesMetaList().add(metadata);
-        savePhysicalFile(ownerGroup.getFilePath(metadata), data);
+        savePhysicalFile(metadata.getServerPath(ownerGroup), data);
     }
 
 

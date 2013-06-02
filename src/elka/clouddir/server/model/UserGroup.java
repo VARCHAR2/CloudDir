@@ -86,12 +86,5 @@ public class UserGroup implements Serializable{
 		}
 	}
 
-    /**
-     * Gets the absolute path of a file
-     */
-    public String getFilePath(final AbstractFileInfo fileInfo) {
-        return sharedFolderPath + "/" + fileInfo.getRelativePath();
-    }
-	
 	
 }
