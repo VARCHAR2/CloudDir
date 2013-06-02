@@ -186,12 +186,42 @@ public class LocalFileChangedListener implements Runnable {
 		return fileMetadata; // TODO implement setting username to a file
 	}
 
-	public AbstractFileInfo getMetadata(String name) {
-		return metadataMap.get(name);
+	/**
+	 * Gets metadata ready in map
+	 * @param name
+	 * @return
+	 * @throws IOException 
+	 * @throws NoSuchAlgorithmException 
+	 */
+	public AbstractFileInfo getMetadata(String name) throws NoSuchAlgorithmException, IOException {
+		
+		if (!metadataMap.containsKey(name)) {
+			File file = new File(getRelativeProgramPath(name));
+			if (file.isDirectory()) {
+				return generateSharedEmptyFolder(file);
+			}
+			else {
+				return generateSharedFileinfo(file);
+			}
+		}
+		else {
+			return metadataMap.get(name);			
+		}
+
 	}
 
+	/**
+	 * Returns file in array of bytes
+	 * @param name
+	 * @return
+	 * @throws IOException
+	 */
 	public Serializable getFile(String name) throws IOException {
-	    Path path = Paths.get(folderPath + File.separator + name);
+	    Path path = Paths.get(getRelativeProgramPath(name));
 	    return Files.readAllBytes(path);
+	}
+	
+	private String getRelativeProgramPath(String path) {
+		return folderPath + File.separator + path;
 	}
 }

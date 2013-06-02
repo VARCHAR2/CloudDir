@@ -67,10 +67,10 @@ public class ClientController {
 		strategyMap.put(LoginAcceptedEvent.class, new LoginAcceptedStrategy());
 		strategyMap.put(LoginRejectedEvent.class, new LoginRejectedStrategy());
 		
-		strategyMap.put(FileCreatedEvent.class, new LoginRejectedStrategy());
-		strategyMap.put(FileModifiedEvent.class, new LoginRejectedStrategy());
-		strategyMap.put(FileRenamedEvent.class, new LoginRejectedStrategy());
-		strategyMap.put(FileDeletedEvent.class, new LoginRejectedStrategy());
+		strategyMap.put(FileCreatedEvent.class, new FileCreatedStrategy());
+		strategyMap.put(FileModifiedEvent.class, new FileModifiedStrategy());
+		strategyMap.put(FileRenamedEvent.class, new FileRenamedStrategy());
+		strategyMap.put(FileDeletedEvent.class, new FileDeletedStrategy());
 		
 	}
 
@@ -187,12 +187,16 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileCreatedEvent fileCreatedEvent = (FileCreatedEvent) clientEvent;
+			System.out.println("File: " + fileCreatedEvent.getName() + " is created");
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
 				// TODO implement sending info about the renamed file
 				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileCreatedEvent.getName()));
 				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}		}
@@ -204,12 +208,16 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileModifiedEvent fileModifiedEvent = (FileModifiedEvent) clientEvent;
+			System.out.println("File: " + fileModifiedEvent.getName() + " is modified");
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
 				// TODO implement sending info about the renamed file
 				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileModifiedEvent.getName()));
 				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileModifiedEvent.getName()));
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -222,10 +230,12 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileRenamedEvent fileRenamedEvent = (FileRenamedEvent) clientEvent;
+			System.out.println("File: " + fileRenamedEvent.getOldName() + " -> " + fileRenamedEvent.getNewName());
 			try {
 				serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
 				// TODO implement sending info about the renamed file
 				serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
+//				updateMetadataMap(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -239,10 +249,14 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileDeletedEvent fileDeletedEvent = (FileDeletedEvent) clientEvent;
+			System.out.println("File: " + fileDeletedEvent.getName() + " is deleted");
 			try {
 				serverCommunicationThread.sendMessage(Message.FILE_DELETED);
 				serverCommunicationThread.sendObject(localFileSystemListener.getMetadata(fileDeletedEvent.getName()));
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
