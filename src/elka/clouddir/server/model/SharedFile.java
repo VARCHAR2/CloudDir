@@ -1,13 +1,15 @@
 package elka.clouddir.server.model;
 
 
+import java.util.Date;
+
 public class SharedFile extends AbstractFileInfo{
 
 	private String md5sum;
 	private long size;
 	
-	public SharedFile(String relativePath, long modified, String lastModifiedBy, String md5sum, long size) {
-		super(relativePath, modified, lastModifiedBy);
+	public SharedFile(String relativePath, long modified, String lastModifiedBy, String md5sum, long size, Date lastUploadTime) {
+		super(relativePath, modified, lastModifiedBy, lastUploadTime);
 		// TODO Auto-generated constructor stub
 		this.md5sum = md5sum;
 		this.size = size;
