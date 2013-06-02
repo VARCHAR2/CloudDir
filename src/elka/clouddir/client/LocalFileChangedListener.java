@@ -154,7 +154,7 @@ public class LocalFileChangedListener implements Runnable {
 	 * @return
 	 */
 	private AbstractFileInfo generateSharedEmptyFolder(File folder) {
-		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan"); // TODO implement setting username to a file
+		return new SharedEmptyFolder(folder.getAbsolutePath(), folder.lastModified(), "bogdan", null); // TODO implement setting username to a file
 	}
 
 	/**
@@ -166,6 +166,6 @@ public class LocalFileChangedListener implements Runnable {
 	 */
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
 		return new SharedFile(fileEntry.getAbsolutePath(), fileEntry.lastModified(), "bogdan", 
-				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace()); // TODO implement setting username to a file
+				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null); // TODO implement setting username to a file
 	}
 }

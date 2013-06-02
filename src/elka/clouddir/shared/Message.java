@@ -10,7 +10,8 @@ public enum Message {
 	FILE_REQUEST("File request"),
 	FULL_METADATA_TRANSFER("Full metadata transfer"),
 	FILE_TRANSFER("File transfer"),
-    CONFLICT_DETECTED("Conflict detected");
+    CONFLICT_DETECTED("Conflict detected"),
+    FILE_BEING_UPDATED("File being updated");
 	
 	private String messageName;
 	

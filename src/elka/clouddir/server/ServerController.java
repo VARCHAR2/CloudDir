@@ -44,6 +44,8 @@ public class ServerController {
 
     private List<AbstractFileInfo> filesList;
 
+    private Map<AbstractFileInfo, AbstractFileInfo> uncommitedFiles;
+
     private int MAX_CLIENTS = 10;
 
     private static List<User> USERS;
@@ -62,7 +64,6 @@ public class ServerController {
         USERS.add(new User("Bogdan", false, group, "10101010"));
         USERS.add(new User("Lukasz", false, group, "qwertyuiop"));
     }
-
 
     boolean         running;
 //
@@ -87,6 +88,8 @@ public class ServerController {
         serverEventQueue = new LinkedBlockingQueue<>();
 
         threads = new LinkedList<>();
+
+        uncommitedFiles = new HashMap<>();
 
 
         connectionReceiver = new ConnectionReceiver(serverEventQueue, serverSocket);
@@ -173,9 +176,11 @@ public class ServerController {
 
                 AbstractFileInfo changedFile = findFileByName(metadata);
                 if(changedFile != null) {
-                    if(changedFile.getLastModifiedBy().equals(metadata.getLastModifiedBy())) {
+                    if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
                         //OK - updating file
-                        //FIXME update the metadata
+                        //set new metadata
+                        uncommitedFiles.put(metadata, changedFile);
+                        //send request
                         fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
                         fileChangedEvent.getSenderThread().sendObject(metadata);
                     } else {
@@ -184,7 +189,8 @@ public class ServerController {
                     }
                 } else {
                     //new file
-                    //FIXME add metadata
+                    metadata.setLastUploadTime(new Date());
+                    uncommitedFiles.put(metadata, null);
                     fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
                     fileChangedEvent.getSenderThread().sendObject(metadata);
                 }
