@@ -63,7 +63,14 @@ public class ClientCommunicationThread extends Thread
                 running = false;
                 System.out.println("IO exception");
             }
+        }
 
+
+        try {
+            in.close();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
