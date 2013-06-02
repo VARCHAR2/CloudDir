@@ -9,6 +9,7 @@ import elka.clouddir.server.model.UserGroup;
 import elka.clouddir.server.serverevents.*;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -189,6 +190,9 @@ public class ServerController {
 //                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
 //                    fileChangedEvent.getSenderThread().sendObject(metadata);
                 }
+                //send further
+                propagateMessage(fileChangedEvent.getSenderThread(), Message.FILE_CHANGED, metadata, fileChangedEvent.getData());
+
             }
         });
         procMap.put(FilePathChangedEvent.class, new ServerEventProcessingStrategy() {
@@ -201,6 +205,8 @@ public class ServerController {
                     //TODO rename the physical file
                     filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed"));
+                    //send further
+                    propagateMessage(filePathChangedEvent.getSenderThread(), Message.FILEPATH_CHANGED, meta);
                 } else {
                     System.out.println("Trying to change the path of the non-existent file");
                     filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
@@ -217,6 +223,8 @@ public class ServerController {
                     deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
                     fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted"));
+                    //send further
+                    propagateMessage(fileDeletedEvent.getSenderThread(), Message.FILE_CHANGED, meta);
                 } else {
                     fileDeletedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
                     System.out.println("Error: deleted file doesn't exist");
@@ -295,6 +303,24 @@ public class ServerController {
         }
         throw new LoginFailedException("User not registered in the system");
     }
+
+    /**
+     * Sends the message to other clients
+     * @param source
+     * @param data
+     * @throws IOException
+     */
+    private void propagateMessage(final ClientCommunicationThread source, final Serializable... data) throws IOException {
+        for(ClientCommunicationThread thread : threads) {
+            if(thread != source) {
+                for(Serializable object : data) {
+                    thread.sendObject(object);
+                }
+            }
+        }
+    }
+
+
 
     private void addFile(UserGroup ownerGroup, AbstractFileInfo metadata, byte[] data) {
         metadata.setLastUploadTime(new Date());
