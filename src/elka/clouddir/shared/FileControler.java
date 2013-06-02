@@ -7,6 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Class for managing file I/O
+ * @author Lukasz Pielaszek
+ */
 public class FileControler {
 	
 	
