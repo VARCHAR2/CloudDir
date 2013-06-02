@@ -202,6 +202,24 @@ public class ServerController {
                 //TODO
             }
         });
+        procMap.put(FileTransferEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws Exception {
+                FileTransferEvent fileTransferEvent = (FileTransferEvent)event;
+                AbstractFileInfo newMeta = fileTransferEvent.getMetadata();
+                if(uncommitedFiles.containsKey(newMeta)) {
+                    //replace file
+                    AbstractFileInfo oldMeta = uncommitedFiles.get(newMeta);
+                    filesList.remove(oldMeta);
+                    filesList.add(newMeta);
+                    uncommitedFiles.remove(newMeta);
+                    //TODO save physical file data
+                } else {
+                    //something's wrong
+                    fileTransferEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
+                }
+            }
+        });
     }
 
 

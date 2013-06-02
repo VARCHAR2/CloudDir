@@ -98,7 +98,10 @@ public class ClientCommunicationThread extends Thread
                 AbstractFileInfo[] metadata = (AbstractFileInfo[]) in.readObject();
                 return new FullMetadataTransferEvent(this, metadata);
             }
-
+            case FILE_TRANSFER:
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                byte[] data = (byte[]) in.readObject();
+                return new FileTransferEvent(this, metadata, data);
             default:
                 throw new UnsupportedOperationException("Operation not implemented");
         }

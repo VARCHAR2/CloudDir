@@ -11,7 +11,8 @@ public enum Message {
 	FULL_METADATA_TRANSFER("Full metadata transfer"),
 	FILE_TRANSFER("File transfer"),
     CONFLICT_DETECTED("Conflict detected"),
-    FILE_BEING_UPDATED("File being updated");
+    FILE_BEING_UPDATED("File being updated"),
+    INTERNAL_SERVER_ERROR("Internal server error");
 	
 	private String messageName;
 	
