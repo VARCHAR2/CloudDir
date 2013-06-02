@@ -148,7 +148,7 @@ public class ClientController {
 		void perform(ClientEvent clientEvent) {
 			try {
 				List<AbstractFileInfo> metadataArray = localFileSystemListener.getSystemMetadata();
-				FilesMetadata filesMetadata = new FilesMetadata(metadataArray.toArray(new AbstractFileInfo[0]));
+				FilesMetadata filesMetadata = new FilesMetadata(metadataArray);
                 System.out.println("Login OK");
 				serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
 				serverCommunicationThread.sendObject(filesMetadata);

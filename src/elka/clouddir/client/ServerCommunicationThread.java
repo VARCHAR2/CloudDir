@@ -21,6 +21,7 @@ public class ServerCommunicationThread extends Thread {
 	private static final int PORT = 3333;
 
     private final BlockingQueue<ClientEvent> clientEventQueue;
+    private boolean running = false;
 
     /**
      * Creating the socket and connecting with server
@@ -44,19 +45,24 @@ public class ServerCommunicationThread extends Thread {
      */
     @Override
     public void run() {
-    	try {
-    		while (true) {
-            
+        running = true;
+        while (running) {
+            try {
                 Message message = (Message)in.readObject();
                 ClientEvent event = processMessage(message);
 //                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
 
                 clientEventQueue.add(event);
-    		}
-        } catch (EOFException e) {
-            System.out.println("Server disconnected");
-    	} catch (Exception e) {
-            e.printStackTrace();
+            } catch (EOFException e) {
+                running = false;
+                System.out.println("Server disconnected");
+            } catch (UnsupportedOperationException | ClassCastException e ) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                running = false;
+                e.printStackTrace();
+            }
+
         }
 
         try {
@@ -97,7 +103,7 @@ public class ServerCommunicationThread extends Thread {
 			case LOGIN_FAILED:
 				return new LoginRejectedEvent();
 			default:
-				throw new UnsupportedOperationException("Operation not implemented");
+				throw new UnsupportedOperationException("Operation not implemented " + message.toString());
     	}
     	
     }
