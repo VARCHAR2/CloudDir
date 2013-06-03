@@ -174,7 +174,7 @@ public class LocalFileChangedListener implements Runnable {
 	 * @throws NoSuchAlgorithmException
 	 * @throws IOException
 	 */
-	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
+	private SharedFile generateSharedFileinfo(final File fileEntry) throws IOException {
 		String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
 		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", null);
 
@@ -245,7 +245,7 @@ public class LocalFileChangedListener implements Runnable {
 		return false;
 	}
 
-	public AbstractFileInfo generateMetadataForFile(String filename) throws NoSuchAlgorithmException, IOException {
+	public AbstractFileInfo generateMetadataForFile(String filename) throws IOException {
 		AbstractFileInfo newFile = generateSharedFileinfo(new File(getRelativeProgramPath(filename)));
 		metadataList.add(newFile);
 		
@@ -294,7 +294,7 @@ public class LocalFileChangedListener implements Runnable {
 		throw new MetadataNotFound(relativePath);
 	}
 
-	public AbstractFileInfo updateMetadataForFile(String relativePath) throws NoSuchAlgorithmException, IOException, MetadataNotFound {
+	public AbstractFileInfo updateMetadataForFile(String relativePath) throws IOException, MetadataNotFound {
 		System.out.println("Main: " + relativePath);
 		relativePath = File.separator + relativePath;
 		for (AbstractFileInfo metadata : metadataList) {
