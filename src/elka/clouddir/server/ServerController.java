@@ -43,8 +43,6 @@ public class ServerController {
 
     private FilesMetadata filesMetadata;
 
-//    private Map<AbstractFileInfo, AbstractFileInfo> uncommitedFiles;
-
     private int MAX_CLIENTS = 10;
 
     private static List<User> USERS;
@@ -54,14 +52,6 @@ public class ServerController {
     private List<UserGroup> userGroups = USER_GROUPS;
 
     static {
-//        USER_GROUPS = new ArrayList<>();
-//        UserGroup group = new UserGroup("Ludziska", "folderLudzisk");
-//        USER_GROUPS.add(group);
-//
-//        USERS = new ArrayList<>();
-//        USERS.add(new User("Michal", false, group, "12345678"));
-//        USERS.add(new User("Bogdan", false, group, "10101010"));
-//        USERS.add(new User("Lukasz", false, group, "qwertyuiop"));
         UserGroupList userGroupList = new UserGroupList();
         userGroupList.pullFromFile();
         UserList userList = new UserList();
@@ -80,8 +70,6 @@ public class ServerController {
         serverEventQueue = new LinkedBlockingQueue<>();
 
         threads = new LinkedList<>();
-
-//        uncommitedFiles = new HashMap<>();
 
         filesMetadata = new FilesMetadata(new ArrayList<AbstractFileInfo>());
 
@@ -164,14 +152,6 @@ public class ServerController {
                 AbstractFileInfo changedFile = findFileByName(metadata.getRelativePath());
                 if(changedFile != null) {
                     if(changedFile.getLastUploadTime().equals(metadata.getLastUploadTime())) {
-                        //OK - updating file
-                        //set new metadata
-//                        uncommitedFiles.put(metadata, changedFile);
-                        //send request
-//                        fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
-//                        fileChangedEvent.getSenderThread().sendObject(metadata);
-//                        deletePhysicalFile(changedFile.getServerPath(ownerGroup));
-//                        filesMetadata.getFilesMetaList().remove(changedFile);
                         removeFile(ownerGroup, changedFile);
 
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
@@ -180,7 +160,6 @@ public class ServerController {
                         fileChangedEvent.getSenderThread().sendObject(new ServerResponse("File update correct: " + metadata.getRelativePath()));
                     } else {
                         //conflict
-//                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
                         metadata.setRelativePath(metadata.getRelativePath() + ".conflicted" + new Date().toString());
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
@@ -192,9 +171,6 @@ public class ServerController {
                     addFile(ownerGroup, metadata, fileChangedEvent.getData());
                     fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileChangedEvent.getSenderThread().sendObject(new ServerResponse("A new file added: "+ metadata.getRelativePath()));
-//                    uncommitedFiles.put(metadata, null);
-//                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
-//                    fileChangedEvent.getSenderThread().sendObject(metadata);
                 }
                 //send further
                 propagateMessage(fileChangedEvent.getSenderThread(), Message.FILE_CHANGED, metadata, fileChangedEvent.getData());
@@ -230,8 +206,6 @@ public class ServerController {
                 FileDeletedEvent fileDeletedEvent = (FileDeletedEvent)event;
                 AbstractFileInfo meta = findFileByName(fileDeletedEvent.getMetadata().getRelativePath());
                 if(meta != null) {
-//                    filesMetadata.getFilesMetaList().remove(meta);
-//                    deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
                     removeFile(fileDeletedEvent.getSenderThread().getUser().getUserGroup(), meta);
                     fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted: " + meta.getRelativePath()));
@@ -256,24 +230,6 @@ public class ServerController {
                 System.out.println("Client thread removed");
             }
         });
-//        procMap.put(FileTransferEvent.class, new ServerEventProcessingStrategy() {
-//            @Override
-//            public void process(ServerEvent event) throws Exception {
-//                FileTransferEvent fileTransferEvent = (FileTransferEvent)event;
-//                AbstractFileInfo newMeta = fileTransferEvent.getMetadata();
-//                if(uncommitedFiles.containsKey(newMeta)) {
-//                    //replace file
-//                    AbstractFileInfo oldMeta = uncommitedFiles.get(newMeta);
-//                    filesMetadata.getFilesMetaList().remove(oldMeta);
-//                    filesMetadata.getFilesMetaList().add(newMeta);
-//                    uncommitedFiles.remove(newMeta);
-//                    //TODO save physical file data
-//                } else {
-//                    //something's wrong
-//                    fileTransferEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
-//                }
-//            }
-//        });
     }
 
 
@@ -351,14 +307,4 @@ public class ServerController {
         filesMetadata.getFilesMetaList().remove(metadata);
         FileControler.deleteFile(metadata.getServerPath(ownerGroup));
     }
-
-//
-//    private void savePhysicalFile(String name, byte[] data) {
-//        System.out.println("Here, the file should be saved (not implemented yet)");
-//    }
-//
-//    private void deletePhysicalFile(String name) {
-//        System.out.println("Here, the file should be saved (not implemented yet)");
-//    }
-
 }
