@@ -332,6 +332,7 @@ public class ServerController {
     }
 
     private void removeFile(UserGroup ownerGroup, AbstractFileInfo metadata) {
+        filesMetadata.getFilesMetaList().remove(metadata);
         FileControler.deleteFile(metadata.getServerPath(ownerGroup));
     }
 
