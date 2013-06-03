@@ -1,6 +1,6 @@
 package elka.clouddir.client.clientEvents;
 
-public class FileRenamedEvent extends FileChanged {
+public class FileRenamedEvent extends FileChangedEvent {
 
 	private final String oldName;
 	private final String newName;

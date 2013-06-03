@@ -1,15 +1,24 @@
 package elka.clouddir.client;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 
 import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.FileChangedOnServerEvent;
+import elka.clouddir.client.clientEvents.FileDeletedOnServerEvent;
+import elka.clouddir.client.clientEvents.FilePathChangedOnServerEvent;
 import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
 import elka.clouddir.client.clientEvents.LoginRejectedEvent;
 import elka.clouddir.client.clientEvents.ServerResponseEvent;
+import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.shared.Message;
+import elka.clouddir.shared.RenameInfo;
 import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
@@ -53,7 +62,6 @@ public class ServerCommunicationThread extends Thread {
             try {
                 Message message = (Message)in.readObject();
                 ClientEvent event = processMessage(message);
-//                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
 
                 clientEventQueue.add(event);
             }
@@ -106,6 +114,19 @@ public class ServerCommunicationThread extends Thread {
 				return new LoginAcceptedEvent();
 			case LOGIN_FAILED:
 				return new LoginRejectedEvent();
+			case FILE_CHANGED: {
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                byte[] data = (byte[]) in.readObject();
+                return new FileChangedOnServerEvent(metadata, data);
+            }
+            case FILE_DELETED: {
+                AbstractFileInfo metadata = (AbstractFileInfo) in.readObject();
+                return new FileDeletedOnServerEvent(metadata);
+            }
+            case FILEPATH_CHANGED: {
+                RenameInfo renameInfo = (RenameInfo) in.readObject();
+                return new FilePathChangedOnServerEvent(renameInfo);
+            }
             case SERVER_RESPONSE:
                 ServerResponse response = (ServerResponse) in.readObject();
                 return new ServerResponseEvent(response);

@@ -1,6 +1,6 @@
 package elka.clouddir.client.clientEvents;
 
-public class FileCreatedEvent extends FileChanged {
+public class FileCreatedEvent extends FileChangedEvent {
 
 	private final String name;
 	

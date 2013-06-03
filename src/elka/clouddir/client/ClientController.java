@@ -1,7 +1,7 @@
 package elka.clouddir.client;
 
+import java.awt.Event;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.FileSystemException;
@@ -12,15 +12,24 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import elka.clouddir.client.clientEvents.*;
+import elka.clouddir.client.clientEvents.ClientEvent;
+import elka.clouddir.client.clientEvents.FileChangedOnServerEvent;
+import elka.clouddir.client.clientEvents.FileCreatedEvent;
+import elka.clouddir.client.clientEvents.FileDeletedEvent;
+import elka.clouddir.client.clientEvents.FileDeletedOnServerEvent;
+import elka.clouddir.client.clientEvents.FileModifiedEvent;
+import elka.clouddir.client.clientEvents.FilePathChangedOnServerEvent;
+import elka.clouddir.client.clientEvents.FileRenamedEvent;
+import elka.clouddir.client.clientEvents.LoginAcceptedEvent;
+import elka.clouddir.client.clientEvents.LoginRejectedEvent;
+import elka.clouddir.client.clientEvents.LoginRequestEvent;
+import elka.clouddir.client.clientEvents.ServerResponseEvent;
 import elka.clouddir.client.exceptions.MetadataNotFound;
 import elka.clouddir.server.model.AbstractFileInfo;
-import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.RenameInfo;
-import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
  * Controller of the client
@@ -30,7 +39,7 @@ public class ClientController {
 
 	private final BlockingQueue<ClientEvent> clientEventQueue;
 	
-	private LocalFileChangedListener localFileSystemListener;
+	private LocalFileSystem localFileSystem;
 	private ServerCommunicationThread serverCommunicationThread;
 	
 	private Map<Class<? extends ClientEvent>, Strategy> strategyMap;
@@ -45,8 +54,8 @@ public class ClientController {
 			serverCommunicationThread = new ServerCommunicationThread(clientEventQueue);
 			serverCommunicationThread.start();
 
-			localFileSystemListener = new LocalFileChangedListener(clientEventQueue);
-			Thread localFileSystemThread = new Thread(localFileSystemListener);
+			localFileSystem = new LocalFileSystem(clientEventQueue);
+			Thread localFileSystemThread = new Thread(localFileSystem);
 			localFileSystemThread.start();
 		} catch (IOException e) {
 			System.out.println("Server is down");
@@ -72,6 +81,9 @@ public class ClientController {
 		strategyMap.put(FileDeletedEvent.class, new FileDeletedStrategy());
 
         strategyMap.put(ServerResponseEvent.class, new ServerResponseStrategy());
+        strategyMap.put(FileChangedOnServerEvent.class, new FileChangedOnServerStrategy());
+        strategyMap.put(FileDeletedOnServerEvent.class, new FileDeletedOnServerStrategy());
+        strategyMap.put(FilePathChangedOnServerEvent.class, new FilePathChangedOnServerStrategy());
 		
 	}
 
@@ -119,12 +131,12 @@ public class ClientController {
 			try{
 				System.out.print("Login: ");
 			    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
-			    String login;// = bufferRead.readLine();
-			    login = "Bogdan";
+			    String login = bufferRead.readLine();
+//			    login = "Bogdan";
 		 
 			    System.out.print("Password: ");
-			    String password;// = bufferRead.readLine();
-			    password = "10101010";
+			    String password = bufferRead.readLine();
+//			    password = "10101010";
 			    serverCommunicationThread.sendMessage(Message.LOGIN_REQUEST);
 			    serverCommunicationThread.sendObject(new LoginInfo(login, password));
 //			    clientEventQueue.add(new LoginAcceptedEvent()); 
@@ -150,9 +162,9 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			try {
-				List<AbstractFileInfo> metadataArray = localFileSystemListener.initSystemMetadata();
+				List<AbstractFileInfo> metadataArray = localFileSystem.initSystemMetadata();
 				FilesMetadata filesMetadata = new FilesMetadata(metadataArray);
-                System.out.println("Login OK");
+                System.out.println("[System:] Login OK");
 				serverCommunicationThread.sendMessage(Message.FULL_METADATA_TRANSFER);
 				serverCommunicationThread.sendObject(filesMetadata);
 //				for (AbstractFileInfo abstractFileInfo : abstractFileInfos) {
@@ -179,7 +191,7 @@ public class ClientController {
 		
 		@Override
 		void perform(ClientEvent clientEvent) {
-			System.out.println("Login was rejected");
+			System.out.println("[System:] Login was rejected");
 			clientEventQueue.add(new LoginRequestEvent());
 		}
 		
@@ -190,20 +202,18 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileCreatedEvent fileCreatedEvent = (FileCreatedEvent) clientEvent;
-			System.out.println("File: " + fileCreatedEvent.getName() + " is created");
+			System.out.println("[System:] " + fileCreatedEvent.getName() + " is created");
 			try {
 				
-				if (!localFileSystemListener.isDirectory(fileCreatedEvent.getName())) {
+				if (!localFileSystem.isDirectory(fileCreatedEvent.getName())) {
 					serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
-					AbstractFileInfo fileInfo = localFileSystemListener.generateMetadataForFile(fileCreatedEvent.getName());
-					localFileSystemListener.deleteUpperEmptyFolders(fileCreatedEvent.getName());
+					AbstractFileInfo fileInfo = localFileSystem.generateMetadataForFile(fileCreatedEvent.getName());
+					localFileSystem.deleteUpperEmptyFolders(fileCreatedEvent.getName());
 					serverCommunicationThread.sendObject(fileInfo);
-					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));
-					
-					System.out.println(fileCreatedEvent.getName());
+					serverCommunicationThread.sendObject(localFileSystem.getFile(fileCreatedEvent.getName()));
 				}
 				else {
-					AbstractFileInfo fileInfo = localFileSystemListener.generateMetadataForFolder(fileCreatedEvent.getName());
+					localFileSystem.generateMetadataForFolder(fileCreatedEvent.getName());
 				}
 //				localFileSystemListener.printMetadata();
 			} catch (FileSystemException e) {
@@ -225,29 +235,21 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileModifiedEvent fileModifiedEvent = (FileModifiedEvent) clientEvent;
-			System.out.println("File: " + fileModifiedEvent.getName() + " is modified");
+			System.out.println("[System:] " + fileModifiedEvent.getName() + " is modified");
 			try {
 				
-				if (!localFileSystemListener.isDirectory(fileModifiedEvent.getName())) {
+				if (!localFileSystem.isDirectory(fileModifiedEvent.getName())) {
 					serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
-					AbstractFileInfo fileInfo = localFileSystemListener.updateMetadataForFile(fileModifiedEvent.getName());
+					AbstractFileInfo fileInfo = localFileSystem.updateMetadataForFile(fileModifiedEvent.getName());
 					serverCommunicationThread.sendObject(fileInfo);
-					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileModifiedEvent.getName()));
+					serverCommunicationThread.sendObject(localFileSystem.getFile(fileModifiedEvent.getName()));
 				}
-				localFileSystemListener.printMetadata();
 				
-				/*localFileSystemListener.deleteMetadata(fileModifiedEvent.getName());
-				AbstractFileInfo modifiedMetadata = localFileSystemListener.addMetadata(fileModifiedEvent.getName());
-//				modifiedFileMetadata.setRelativePath(fileModifiedEvent.getName());
-//				localFileSystemListener.addMetadata(modifiedFileMetadata);
-				serverCommunicationThread.sendObject(modifiedMetadata);
-				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileModifiedEvent.getName()));*/
+//				localFileSystemListener.printMetadata();
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (MetadataNotFound e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 		
@@ -258,33 +260,26 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileRenamedEvent fileRenamedEvent = (FileRenamedEvent) clientEvent;
-			System.out.println("File: " + fileRenamedEvent.getOldName() + " -> " + fileRenamedEvent.getNewName());
+			System.out.println("[System:] " + fileRenamedEvent.getOldName() + " -> " + fileRenamedEvent.getNewName());
 			try {
 				
-				
-				if (!localFileSystemListener.isDirectory(fileRenamedEvent.getNewName())) {
+				if (!localFileSystem.isDirectory(fileRenamedEvent.getNewName())) {
 					serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
-					AbstractFileInfo fileInfo = localFileSystemListener.updateMetadataForFile(fileRenamedEvent.getOldName(), 
+					localFileSystem.updateMetadataForFile(fileRenamedEvent.getOldName(), 
 							fileRenamedEvent.getNewName());
-					serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getNewName(), fileRenamedEvent.getOldName()));
+					serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
 //					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileDeletedEvent.getName()));
 				}
 				else {
 					serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
-					AbstractFileInfo fileInfo = localFileSystemListener.updateMetadataForFolder(fileRenamedEvent.getOldName(), 
+					localFileSystem.updateMetadataForFolder(fileRenamedEvent.getOldName(), 
 							fileRenamedEvent.getNewName());
-					serverCommunicationThread.sendObject(fileInfo);
-//					AbstractFileInfo fileInfo = localFileSystemListener.deleteFolderMetadata(fileRenamedEvent.getName());
-//					serverCommunicationThread.sendObject(fileInfo);
+					serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
+					System.out.println(fileRenamedEvent.getOldName());
+					System.out.println(fileRenamedEvent.getNewName());
 				}
-				localFileSystemListener.printMetadata();
+//				localFileSystemListener.printMetadata();
 				
-				/*AbstractFileInfo renamedFileMetadata = localFileSystemListener.deleteMetadata(fileRenamedEvent.getOldName());
-				renamedFileMetadata.setRelativePath(fileRenamedEvent.getNewName());
-				localFileSystemListener.addMetadata(renamedFileMetadata);
-				// TODO implement sending info about the renamed file
-				serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
-//				updateMetadataMap(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName());*/
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -301,18 +296,18 @@ public class ClientController {
 		@Override
 		void perform(ClientEvent clientEvent) {
 			FileDeletedEvent fileDeletedEvent = (FileDeletedEvent) clientEvent;
-			System.out.println("File: " + fileDeletedEvent.getName() + " is deleted");
+			System.out.println("[System:] " + fileDeletedEvent.getName() + " is deleted");
 			try {
 				
-				if (!localFileSystemListener.isDirectory(fileDeletedEvent.getName())) {
+				if (!localFileSystem.isDirectory(fileDeletedEvent.getName())) {
 					serverCommunicationThread.sendMessage(Message.FILE_DELETED);
-					AbstractFileInfo fileInfo = localFileSystemListener.deleteFileMetadata(fileDeletedEvent.getName());
+					AbstractFileInfo fileInfo = localFileSystem.deleteFileMetadata(fileDeletedEvent.getName());
 					serverCommunicationThread.sendObject(fileInfo);
 				}
 				else {
-					AbstractFileInfo fileInfo = localFileSystemListener.deleteFolderMetadata(fileDeletedEvent.getName());
+					localFileSystem.deleteFolderMetadata(fileDeletedEvent.getName());
 				}
-				localFileSystemListener.printMetadata();
+//				localFileSystemListener.printMetadata();
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -330,6 +325,44 @@ public class ClientController {
         void perform(ClientEvent clientEvent) {
             System.out.println("[Server response:] " +
                     ((ServerResponseEvent)clientEvent).getServerResponse().getMessage());
+        }
+    }
+    
+    class FileChangedOnServerStrategy extends Strategy {
+
+        @Override
+        void perform(ClientEvent clientEvent) {
+        	FileChangedOnServerEvent fileChangedOnServerEvent = (FileChangedOnServerEvent) clientEvent;
+        	AbstractFileInfo metadata = fileChangedOnServerEvent.getMetadata();
+        	try {
+        		AbstractFileInfo changedFile = localFileSystem.findFileByName(metadata.getRelativePath());
+        		if(changedFile != null) {
+					localFileSystem.removeFile(changedFile);
+        			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
+        		}
+        		else {
+        			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
+        		}
+        	} catch (MetadataNotFound e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
+    
+    class FileDeletedOnServerStrategy extends Strategy {
+
+        @Override
+        void perform(ClientEvent clientEvent) {
+        	
+        }
+    }
+    
+    class FilePathChangedOnServerStrategy extends Strategy {
+
+        @Override
+        void perform(ClientEvent clientEvent) {
+        	
         }
     }
 
