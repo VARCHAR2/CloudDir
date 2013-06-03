@@ -26,10 +26,12 @@ import elka.clouddir.client.clientEvents.LoginRequestEvent;
 import elka.clouddir.client.clientEvents.ServerResponseEvent;
 import elka.clouddir.client.exceptions.MetadataNotFound;
 import elka.clouddir.server.model.AbstractFileInfo;
+import elka.clouddir.server.serverevents.FilePathChangedEvent;
 import elka.clouddir.shared.FilesMetadata;
 import elka.clouddir.shared.LoginInfo;
 import elka.clouddir.shared.Message;
 import elka.clouddir.shared.RenameInfo;
+import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
  * Controller of the client
@@ -226,6 +228,7 @@ public class ClientController {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			localFileSystem.saveMetadata();
 		}
 		
 	}
@@ -251,6 +254,7 @@ public class ClientController {
 				// TODO Auto-generated catch block
 			} catch (MetadataNotFound e) {
 			}
+			localFileSystem.saveMetadata();
 		}
 		
 	}
@@ -287,6 +291,7 @@ public class ClientController {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			localFileSystem.saveMetadata();
 		}
 		
 	}
@@ -314,7 +319,8 @@ public class ClientController {
 				e.printStackTrace();
 			} catch (MetadataNotFound e) {
 				System.err.println(e.getMessage());
-			}			
+			}		
+			localFileSystem.saveMetadata();
 		}
 		
 	}
@@ -334,19 +340,16 @@ public class ClientController {
         void perform(ClientEvent clientEvent) {
         	FileChangedOnServerEvent fileChangedOnServerEvent = (FileChangedOnServerEvent) clientEvent;
         	AbstractFileInfo metadata = fileChangedOnServerEvent.getMetadata();
-        	try {
-        		AbstractFileInfo changedFile = localFileSystem.findFileByName(metadata.getRelativePath());
-        		if(changedFile != null) {
-					localFileSystem.removeFile(changedFile);
-        			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
-        		}
-        		else {
-        			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
-        		}
-        	} catch (MetadataNotFound e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+        	AbstractFileInfo changedFile = localFileSystem.findFileByName(metadata.getRelativePath());
+    		if(changedFile != null) {
+				localFileSystem.removeFile(changedFile);
+    			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
+    		}
+    		else {
+    			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
+    		}
+    		localFileSystem.saveMetadata();
         }
     }
     
@@ -354,7 +357,17 @@ public class ClientController {
 
         @Override
         void perform(ClientEvent clientEvent) {
-        	
+        	FileDeletedOnServerEvent fileDeletedOnServerEvent = (FileDeletedOnServerEvent) clientEvent;
+        	AbstractFileInfo metadata = fileDeletedOnServerEvent.getMetadata();
+
+        	AbstractFileInfo changedFile = localFileSystem.findFileByName(metadata.getRelativePath());
+    		if(changedFile != null) {
+				localFileSystem.removeFile(changedFile);
+    		}
+    		else {
+    			System.out.println("[System:] Deleted file doesn't exist");
+    		}
+    		localFileSystem.saveMetadata();
         }
     }
     
@@ -362,7 +375,15 @@ public class ClientController {
 
         @Override
         void perform(ClientEvent clientEvent) {
-        	
+        	FilePathChangedOnServerEvent pathChangedOnServerEvent = (FilePathChangedOnServerEvent) clientEvent;
+            AbstractFileInfo meta = localFileSystem.findFileByName(pathChangedOnServerEvent.getRenameInfo().getOldPath());
+            if(meta != null) {
+                meta.setRelativePath(pathChangedOnServerEvent.getRenameInfo().getNewPath());
+                //TODO rename the physical file
+            } else {
+                System.out.println("[System:] Trying to change the path of the non-existent file");
+            }
+            localFileSystem.saveMetadata();
         }
     }
 

@@ -26,6 +26,7 @@ import elka.clouddir.server.model.AbstractFileInfo;
 import elka.clouddir.server.model.SharedEmptyFolder;
 import elka.clouddir.server.model.SharedFile;
 import elka.clouddir.shared.FileControler;
+import elka.clouddir.shared.FilesMetadata;
 
 /**
  * That class handles program communication with file system.
@@ -135,6 +136,8 @@ public class LocalFileSystem implements Runnable {
 	public List<AbstractFileInfo> initSystemMetadata() throws NoSuchAlgorithmException, IOException {
 		
 		File folder = new File(folderPath);
+		saveMetadata();
+		openMetadata();
 		
 		listFilesForFolder(folder);
 		
@@ -149,7 +152,10 @@ public class LocalFileSystem implements Runnable {
 	 */
 	private void listFilesForFolder(final File folder) throws NoSuchAlgorithmException, IOException {
 		if (folder.listFiles().length == 0) {
-			metadataList.add(generateSharedEmptyFolder(folder));
+			String relativePath = folder.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
+			if (findFileByName(relativePath) != null) {
+				metadataList.add(generateSharedEmptyFolder(folder));
+			}
 		}
 		else {
 		    for (final File fileEntry : folder.listFiles()) {
@@ -157,7 +163,10 @@ public class LocalFileSystem implements Runnable {
 		        	listFilesForFolder(fileEntry);
 		        } 
 		        else {
-		        	metadataList.add(generateSharedFileinfo(fileEntry));
+		        	String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
+		        	if (findFileByName(relativePath) != null) { // TODO check (not sure it will work)
+		        		metadataList.add(generateSharedFileinfo(fileEntry));
+		        	}
 		        }
 		    }
 		}
@@ -368,14 +377,24 @@ public class LocalFileSystem implements Runnable {
         return null;
     }
 
-	public void removeFile(AbstractFileInfo changedFile) throws MetadataNotFound {
+	public void removeFile(AbstractFileInfo changedFile) {
 		FileControler.deleteFile(getRelativeProgramPath(changedFile.getRelativePath()));
-		deleteFileMetadata(changedFile.getRelativePath());
+		metadataList.remove(changedFile);//deleteFileMetadata(changedFile.getRelativePath());
 	}
 
 	public void addFile(AbstractFileInfo metadata, byte[] data) {
 		metadataList.add(metadata);
 		FileControler.writeFile(getRelativeProgramPath(metadata.getRelativePath()), data);
+	}
+
+	public void saveMetadata() {
+		new FilesMetadata(metadataList).pushToFile();
+	}
+	
+	private void openMetadata() {
+		FilesMetadata filesMetadata = new FilesMetadata(metadataList);
+		filesMetadata.pullFromFile();
+		metadataList = filesMetadata.getFilesMetaList();
 	}
 
 	
