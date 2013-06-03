@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.FileSystemException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
@@ -192,13 +193,14 @@ public class ClientController {
 			System.out.println("File: " + fileCreatedEvent.getName() + " is created");
 			try {
 				
-				
-				
 				if (!localFileSystemListener.isDirectory(fileCreatedEvent.getName())) {
 					serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
 					AbstractFileInfo fileInfo = localFileSystemListener.generateMetadataForFile(fileCreatedEvent.getName());
+					localFileSystemListener.deleteUpperEmptyFolders(fileCreatedEvent.getName());
 					serverCommunicationThread.sendObject(fileInfo);
 					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));
+					
+					System.out.println(fileCreatedEvent.getName());
 				}
 				else {
 //					serverCommunicationThread.sendMessage(Message.FILE_CHANGED);
@@ -211,10 +213,17 @@ public class ClientController {
 				/*AbstractFileInfo addedMetadata = localFileSystemListener.addMetadata(fileCreatedEvent.getName());
 				serverCommunicationThread.sendObject(addedMetadata);
 				serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileCreatedEvent.getName()));*/
-			} catch (IOException e) {
+			} catch (FileSystemException e) {
+				try {
+					serverCommunicationThread.sendObject(new byte[0]);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -265,17 +274,20 @@ public class ClientController {
 			FileRenamedEvent fileRenamedEvent = (FileRenamedEvent) clientEvent;
 			System.out.println("File: " + fileRenamedEvent.getOldName() + " -> " + fileRenamedEvent.getNewName());
 			try {
-				serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
+				
 				
 				if (!localFileSystemListener.isDirectory(fileRenamedEvent.getNewName())) {
-					serverCommunicationThread.sendMessage(Message.FILE_DELETED);
+					serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
 					AbstractFileInfo fileInfo = localFileSystemListener.updateMetadataForFile(fileRenamedEvent.getOldName(), 
 							fileRenamedEvent.getNewName());
-					serverCommunicationThread.sendObject(fileInfo);
+					serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getNewName(), fileRenamedEvent.getOldName()));
 //					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileDeletedEvent.getName()));
 				}
 				else {
-//					serverCommunicationThread.sendMessage(Message.FILE_DELETED);
+					serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
+					AbstractFileInfo fileInfo = localFileSystemListener.updateMetadataForFolder(fileRenamedEvent.getOldName(), 
+							fileRenamedEvent.getNewName());
+					serverCommunicationThread.sendObject(fileInfo);
 //					AbstractFileInfo fileInfo = localFileSystemListener.deleteFolderMetadata(fileRenamedEvent.getName());
 //					serverCommunicationThread.sendObject(fileInfo);
 				}

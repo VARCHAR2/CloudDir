@@ -5,6 +5,7 @@ import java.util.Date;
 
 
 public abstract class AbstractFileInfo implements Serializable {
+	
 	private String relativePath;
 	private long modified;
 	private String lastModifiedBy;

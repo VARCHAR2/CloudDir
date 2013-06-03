@@ -7,7 +7,6 @@ public class SharedEmptyFolder extends AbstractFileInfo {
 
 	public SharedEmptyFolder(String relativePath, long modified, String lastModifiedBy, Date lastUploadTime) {
 		super(relativePath, modified, lastModifiedBy, lastUploadTime);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

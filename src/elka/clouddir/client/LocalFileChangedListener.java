@@ -176,8 +176,7 @@ public class LocalFileChangedListener implements Runnable {
 	 */
 	private SharedFile generateSharedFileinfo(final File fileEntry) throws NoSuchAlgorithmException, IOException {
 		String relativePath = fileEntry.getAbsolutePath().substring((new File(folderPath).getAbsolutePath().length()));
-		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", 
-				HashGenerator.sha1(fileEntry), fileEntry.getTotalSpace(), null);
+		SharedFile fileMetadata = new SharedFile(relativePath, fileEntry.lastModified(), "bogdan", null);
 
 		return fileMetadata; // TODO implement setting username to a file
 	}
@@ -247,13 +246,28 @@ public class LocalFileChangedListener implements Runnable {
 	}
 
 	public AbstractFileInfo generateMetadataForFile(String filename) throws NoSuchAlgorithmException, IOException {
-		return generateSharedFileinfo(new File(filename));
+		AbstractFileInfo newFile = generateSharedFileinfo(new File(getRelativeProgramPath(filename)));
+		metadataList.add(newFile);
+		
+		
+		return newFile;
 	}
 	
+	public void deleteUpperEmptyFolders(String filename) {
+		filename = File.separator + filename;
+		AbstractFileInfo metadataForRemoving = null;
+		for (AbstractFileInfo metadata : metadataList) {
+			if (filename.startsWith(metadata.getRelativePath()) && metadata instanceof SharedEmptyFolder) {
+				metadataForRemoving = metadata;
+			}
+		}
+		if (metadataForRemoving != null) {
+			metadataList.remove(metadataForRemoving);
+		}
+	}
+
 	public AbstractFileInfo generateMetadataForFolder(String filename) {
-//		System.out.println(filename);
 		AbstractFileInfo emptyFolder = generateSharedEmptyFolder(new File(getRelativeProgramPath(filename)));
-//		System.out.println(emptyFolder);
 		metadataList.add(emptyFolder);
 		return emptyFolder;
 	}
@@ -288,8 +302,6 @@ public class LocalFileChangedListener implements Runnable {
 			if (metadata.getRelativePath().equals(relativePath)) {
 				File file = new File(getRelativeProgramPath(relativePath));
 //				System.out.println(getRelativeProgramPath(relativePath));
-				((SharedFile)metadata).setMd5sum(HashGenerator.sha1(file));
-				((SharedFile)metadata).setSize(file.getTotalSpace());
 				return metadata;
 			}
 		}
@@ -297,6 +309,26 @@ public class LocalFileChangedListener implements Runnable {
 	}
 
 	public AbstractFileInfo updateMetadataForFile(String oldRelativePath, String newRelativePath) throws MetadataNotFound {
+//		System.out.println("Old: " + oldRelativePath + " New: " + newRelativePath);
+		oldRelativePath = File.separator + oldRelativePath;
+		newRelativePath = File.separator + newRelativePath;
+		for (AbstractFileInfo metadata : metadataList) {
+			if (metadata.getRelativePath().equals(oldRelativePath)) {
+				metadata.setRelativePath(newRelativePath);
+//				System.out.println(metadata);
+				return metadata;
+			}
+			if (metadata.getRelativePath().startsWith(oldRelativePath + File.separator)) {
+				metadata.setRelativePath(newRelativePath + metadata.getRelativePath().substring(newRelativePath.length()));
+//				System.out.println(metadata);
+				return metadata;
+			}
+		}
+		throw new MetadataNotFound(oldRelativePath);
+	}
+
+	public AbstractFileInfo updateMetadataForFolder(String oldRelativePath,
+			String newRelativePath) throws MetadataNotFound {
 //		System.out.println("Old: " + oldRelativePath + " New: " + newRelativePath);
 		oldRelativePath = File.separator + oldRelativePath;
 		newRelativePath = File.separator + newRelativePath;

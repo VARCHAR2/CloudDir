@@ -2,6 +2,7 @@ package elka.clouddir.client;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 
 import elka.clouddir.client.clientEvents.ClientEvent;
@@ -55,7 +56,8 @@ public class ServerCommunicationThread extends Thread {
 //                TransmissionEnd transmissionEnd = (TransmissionEnd)in.readObject();
 
                 clientEventQueue.add(event);
-            } catch (EOFException e) {
+            }
+            catch (EOFException | SocketException e) {
                 running = false;
                 System.out.println("Server disconnected");
             } catch (UnsupportedOperationException | ClassCastException e ) {
