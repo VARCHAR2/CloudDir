@@ -110,18 +110,23 @@ public class LocalFileSystem implements Runnable {
 
         public void fileRenamed(int wd, String rootPath, String oldName,
                 String newName) {
-        	clientEventQueue.add(new FileRenamedEvent(oldName, newName));
+            if(oldName.charAt(0) != '/') oldName = "/" + oldName;
+            if(newName.charAt(0) != '/') newName = "/" + newName;
+            clientEventQueue.add(new FileRenamedEvent(oldName, newName));
         }
 
         public void fileModified(int wd, String rootPath, String name) {
-        	clientEventQueue.add(new FileModifiedEvent(name));
+            if(name.charAt(0) != '/') name = "/" + name;
+            clientEventQueue.add(new FileModifiedEvent(name));
         }
 
         public void fileDeleted(int wd, String rootPath, String name) {
+            if(name.charAt(0) != '/') name = "/" + name;
         	clientEventQueue.add(new FileDeletedEvent(name));
         }
 
         public void fileCreated(int wd, String rootPath, String name) {
+            if(name.charAt(0) != '/') name = "/" + name;
         	clientEventQueue.add(new FileCreatedEvent(name));
         }
 
@@ -226,7 +231,7 @@ public class LocalFileSystem implements Runnable {
 	}
 	
 	private String getRelativeProgramPath(String path) {
-		return folderPath + File.separator + path;
+		return folderPath + path;
 	}
 
 	public void addMetadata(AbstractFileInfo addedMatadata) {
@@ -244,7 +249,7 @@ public class LocalFileSystem implements Runnable {
 
 	public boolean isDirectory(String relativePath) {
 //		System.out.println(relativePath);
-		relativePath = File.separator + relativePath; 
+//		relativePath = File.separator + relativePath;
 		File file = new File(getRelativeProgramPath(relativePath));
 		if (file.exists()) {
 			return file.isDirectory();
@@ -271,7 +276,7 @@ public class LocalFileSystem implements Runnable {
 	}
 	
 	public void deleteUpperEmptyFolders(String filename) {
-		filename = File.separator + filename;
+//		filename = File.separator + filename;
 		AbstractFileInfo metadataForRemoving = null;
 		for (AbstractFileInfo metadata : metadataList) {
 			if (filename.startsWith(metadata.getRelativePath()) && metadata instanceof SharedEmptyFolder) {
@@ -290,9 +295,9 @@ public class LocalFileSystem implements Runnable {
 	}
 
 	public AbstractFileInfo deleteFileMetadata(String relativePath) throws MetadataNotFound {
-		System.out.println(File.separator + relativePath);
+		System.out.println(relativePath);
 		for (AbstractFileInfo metadata : metadataList) {
-			if (metadata.getRelativePath().equals(File.separator + relativePath)) {
+			if (metadata.getRelativePath().equals(relativePath)) {
 				metadataList.remove(metadata);
 				return metadata;
 			}
@@ -305,7 +310,7 @@ public class LocalFileSystem implements Runnable {
 		List<AbstractFileInfo> fileInfoListForRemoving = new ArrayList<AbstractFileInfo>();
 		for (AbstractFileInfo metadata : metadataList) {
 //			System.out.println(metadata.getRelativePath());
-			if (metadata.getRelativePath().startsWith(File.separator + relativePath)) {
+			if (metadata.getRelativePath().startsWith(relativePath)) {
 				fileInfoListForRemoving.add(metadata);
 			}
 		}
@@ -317,7 +322,7 @@ public class LocalFileSystem implements Runnable {
 
 	public AbstractFileInfo updateMetadataForFile(String relativePath) throws IOException, MetadataNotFound {
 //		System.out.println("Main: " + relativePath);
-		relativePath = File.separator + relativePath;
+//		relativePath = File.separator + relativePath;
 		for (AbstractFileInfo metadata : metadataList) {
 //			System.out.println(metadata.getRelativePath());
 			if (metadata.getRelativePath().equals(relativePath)) {
@@ -331,8 +336,8 @@ public class LocalFileSystem implements Runnable {
 
 	public AbstractFileInfo updateMetadataForFile(String oldRelativePath, String newRelativePath) throws MetadataNotFound {
 //		System.out.println("Old: " + oldRelativePath + " New: " + newRelativePath);
-		oldRelativePath = File.separator + oldRelativePath;
-		newRelativePath = File.separator + newRelativePath;
+//		oldRelativePath = File.separator + oldRelativePath;
+//		newRelativePath = File.separator + newRelativePath;
 		for (AbstractFileInfo metadata : metadataList) {
 			if (metadata.getRelativePath().equals(oldRelativePath)) {
 				metadata.setRelativePath(newRelativePath);
@@ -351,8 +356,8 @@ public class LocalFileSystem implements Runnable {
 	public AbstractFileInfo updateMetadataForFolder(String oldRelativePath,
 			String newRelativePath) throws MetadataNotFound {
 //		System.out.println("Old: " + oldRelativePath + " New: " + newRelativePath);
-		oldRelativePath = File.separator + oldRelativePath;
-		newRelativePath = File.separator + newRelativePath;
+//		oldRelativePath = File.separator + oldRelativePath;
+//		newRelativePath = File.separator + newRelativePath;
 		for (AbstractFileInfo metadata : metadataList) {
 			if (metadata.getRelativePath().equals(oldRelativePath)) {
 				metadata.setRelativePath(newRelativePath);

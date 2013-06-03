@@ -20,7 +20,7 @@ public abstract class AbstractFileInfo implements Serializable {
 		this.lastModifiedBy = username;
         this.lastUploadTime = lastUploadTime;
 
-        if(relativePath.charAt(0) == '/') relativePath = relativePath.substring(1);
+        if(this.relativePath.charAt(0) != '/') this.relativePath = '/' + this.relativePath;
     }
 
 	public String getRelativePath() {
@@ -29,6 +29,7 @@ public abstract class AbstractFileInfo implements Serializable {
 	
 	public void setRelativePath(String relativePath) {
 		this.relativePath = relativePath;
+        if(this.relativePath.charAt(0) != '/') this.relativePath = '/' + this.relativePath;
 	}
 	
 	public long getModified() {

@@ -203,8 +203,13 @@ public class ServerController {
                 FilePathChangedEvent filePathChangedEvent = (FilePathChangedEvent)event;
                 AbstractFileInfo meta = findFileByName(filePathChangedEvent.getRenameInfo().getOldPath());
                 if(meta != null) {
+
+                    String from = meta.getServerPath(filePathChangedEvent.getSenderThread().getUser().getUserGroup());
                     meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
-                    //TODO rename the physical file
+                    String to = meta.getServerPath(filePathChangedEvent.getSenderThread().getUser().getUserGroup());
+
+                    FileControler.moveFile(from, to);
+
                     filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed to: " + meta.getRelativePath()));
                     //send further
