@@ -50,7 +50,7 @@ public class LocalFileSystem implements Runnable {
 		this.clientEventQueue = clientEventQueue;
 		metadataList = new ArrayList<AbstractFileInfo>();
 		
-		System.out.println("User nr 1 or 2?");
+		System.out.println("Usergroup nr 1 or 2?");
 		BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
 	    String userNr = bufferRead.readLine();
 	    if (userNr.equals("1")) {

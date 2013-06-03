@@ -173,7 +173,7 @@ public class ServerController {
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
                         fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
-                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("File update correct"));
+                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("File update correct: " + metadata.getRelativePath()));
                     } else {
                         //conflict
 //                        fileChangedEvent.getSenderThread().sendObject(Message.CONFLICT_DETECTED);
@@ -181,13 +181,13 @@ public class ServerController {
                         addFile(ownerGroup, metadata, fileChangedEvent.getData());
 
                         fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
-                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("Conflict detected - file saved under a new name"));
+                        fileChangedEvent.getSenderThread().sendObject(new ServerResponse("Conflict detected - file saved under a new name: " + metadata.getRelativePath()));
                     }
                 } else {
                     //new file
                     addFile(ownerGroup, metadata, fileChangedEvent.getData());
                     fileChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
-                    fileChangedEvent.getSenderThread().sendObject(new ServerResponse("A new file added"));
+                    fileChangedEvent.getSenderThread().sendObject(new ServerResponse("A new file added: "+ metadata.getRelativePath()));
 //                    uncommitedFiles.put(metadata, null);
 //                    fileChangedEvent.getSenderThread().sendObject(Message.FILE_REQUEST);
 //                    fileChangedEvent.getSenderThread().sendObject(metadata);
@@ -206,11 +206,11 @@ public class ServerController {
                     meta.setRelativePath(filePathChangedEvent.getRenameInfo().getNewPath());
                     //TODO rename the physical file
                     filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
-                    filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed"));
+                    filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed to: " + meta.getRelativePath()));
                     //send further
                     propagateMessage(filePathChangedEvent.getSenderThread(), Message.FILEPATH_CHANGED, meta);
                 } else {
-                    System.out.println("Trying to change the path of the non-existent file");
+                    System.out.println("Trying to change the path of the non-existent file: " + filePathChangedEvent.getRenameInfo().getOldPath());
                     filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
                 }
             }
@@ -225,12 +225,12 @@ public class ServerController {
 //                    deletePhysicalFile(meta.getServerPath(fileDeletedEvent.getSenderThread().getUser().getUserGroup()));
                     removeFile(fileDeletedEvent.getSenderThread().getUser().getUserGroup(), meta);
                     fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
-                    fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted"));
+                    fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted: " + meta.getRelativePath()));
                     //send further
                     propagateMessage(fileDeletedEvent.getSenderThread(), Message.FILE_CHANGED, meta);
                 } else {
                     fileDeletedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
-                    System.out.println("Error: deleted file doesn't exist");
+                    System.out.println("Error: deleted file doesn't exist: " + fileDeletedEvent.getMetadata().getRelativePath());
                 }
             }
         });

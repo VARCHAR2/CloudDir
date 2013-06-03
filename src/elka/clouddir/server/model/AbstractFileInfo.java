@@ -19,6 +19,8 @@ public abstract class AbstractFileInfo implements Serializable {
 		this.modified = modified;
 		this.lastModifiedBy = username;
         this.lastUploadTime = lastUploadTime;
+
+        if(relativePath.charAt(0) == '/') relativePath = relativePath.substring(1);
     }
 
 	public String getRelativePath() {
@@ -63,7 +65,10 @@ public abstract class AbstractFileInfo implements Serializable {
      * Gets the absolute path of a file
      */
     public String getServerPath(final UserGroup owner) {
-        return owner.getSharedFolderPath() + "/" + relativePath;
+        String path = owner.getSharedFolderPath();
+        if(path.charAt(path.length() - 1) != '/' && relativePath.charAt(0) != '/') path += "/";
+        path += relativePath;
+        return path;
     }
 
 }

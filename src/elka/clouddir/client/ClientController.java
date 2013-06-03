@@ -271,7 +271,7 @@ public class ClientController {
 					serverCommunicationThread.sendMessage(Message.FILEPATH_CHANGED);
 					localFileSystem.updateMetadataForFile(fileRenamedEvent.getOldName(), 
 							fileRenamedEvent.getNewName());
-					serverCommunicationThread.sendObject(new RenameInfo("/" + fileRenamedEvent.getOldName(), "/" + fileRenamedEvent.getNewName()));
+					serverCommunicationThread.sendObject(new RenameInfo(fileRenamedEvent.getOldName(), fileRenamedEvent.getNewName()));
 //					serverCommunicationThread.sendObject(localFileSystemListener.getFile(fileDeletedEvent.getName()));
 				}
 				else {
