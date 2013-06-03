@@ -40,6 +40,8 @@ public class LocalFileSystem implements Runnable {
 	private String folderPath = "testFolder";
 	
 	private List<AbstractFileInfo> metadataList;
+
+    private int watchID;
 	
     /**
      * Creates a WatchService and registers the given directory
@@ -66,7 +68,42 @@ public class LocalFileSystem implements Runnable {
 	 */
 	@Override
 	public void run() {
-		
+//
+//        // watch mask, specify events you care about,
+//        // or JNotify.FILE_ANY for all events.
+//        int mask = JNotify.FILE_CREATED
+//                | JNotify.FILE_DELETED
+//                | JNotify.FILE_MODIFIED
+//                | JNotify.FILE_RENAMED;
+//
+//        // watch subtree?
+//        boolean watchSubtree = true;
+//
+//        // add actual watch
+//        int watchID;
+		try {
+//			watchID = JNotify.addWatch(folderPath, mask, watchSubtree, new FolderListener());
+	        addWatch();
+	        // sleep a little, the application will exit if you
+	        // don't (watching is asynchronous), depending on your
+	        // application, this may not be required
+	        Thread.sleep(1000000);
+
+//	        // to remove watch the watch
+            if(!removeWatch()) System.out.println("Watch not removed");
+//	        boolean res = JNotify.removeWatch(watchID);
+//	        if (!res) {
+//	            // invalid watch ID specified.
+//	        }
+		}  catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+    public void addWatch() {
+
         // watch mask, specify events you care about,
         // or JNotify.FILE_ANY for all events.
         int mask = JNotify.FILE_CREATED
@@ -76,31 +113,22 @@ public class LocalFileSystem implements Runnable {
 
         // watch subtree?
         boolean watchSubtree = true;
+        try {
+            watchID = JNotify.addWatch(folderPath, mask, watchSubtree, new FolderListener());
+        } catch (JNotifyException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
 
-        // add actual watch
-        int watchID;
-		try {
-			watchID = JNotify.addWatch(folderPath, mask, watchSubtree, new FolderListener());
-	        // sleep a little, the application will exit if you
-	        // don't (watching is asynchronous), depending on your
-	        // application, this may not be required
-	        Thread.sleep(1000000);
+    public boolean removeWatch()  {
+        try {
+            return JNotify.removeWatch(watchID);
+        } catch (JNotifyException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            return false;
+        }
+    }
 
-	        // to remove watch the watch
-	        boolean res = JNotify.removeWatch(watchID);
-	        if (!res) {
-	            // invalid watch ID specified.
-	        }
-		} catch (JNotifyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-	
 	/**
 	 * Listener for the file system
 	 * @author bogdan
@@ -295,7 +323,7 @@ public class LocalFileSystem implements Runnable {
 	}
 
 	public AbstractFileInfo deleteFileMetadata(String relativePath) throws MetadataNotFound {
-		System.out.println(relativePath);
+//		System.out.println(relativePath);
 		for (AbstractFileInfo metadata : metadataList) {
 			if (metadata.getRelativePath().equals(relativePath)) {
 				metadataList.remove(metadata);
@@ -344,7 +372,7 @@ public class LocalFileSystem implements Runnable {
 //				System.out.println(metadata);
 				return metadata;
 			}
-			if (metadata.getRelativePath().startsWith(oldRelativePath + File.separator)) {
+			if (metadata.getRelativePath().startsWith(oldRelativePath/* + File.separator*/)) {
 				metadata.setRelativePath(newRelativePath + metadata.getRelativePath().substring(newRelativePath.length()));
 //				System.out.println(metadata);
 				return metadata;
@@ -364,7 +392,7 @@ public class LocalFileSystem implements Runnable {
 //				System.out.println(metadata);
 				return metadata;
 			}
-			if (metadata.getRelativePath().startsWith(oldRelativePath + File.separator)) {
+			if (metadata.getRelativePath().startsWith(oldRelativePath/* + File.separator*/)) {
 				metadata.setRelativePath(newRelativePath + metadata.getRelativePath().substring(newRelativePath.length()));
 //				System.out.println(metadata);
 				return metadata;
@@ -391,6 +419,10 @@ public class LocalFileSystem implements Runnable {
 		metadataList.add(metadata);
 		FileControler.writeFile(getRelativeProgramPath(metadata.getRelativePath()), data);
 	}
+
+    public void renameFile(String oldName, String newName) {
+        FileControler.moveFile(getRelativeProgramPath(oldName), getRelativeProgramPath(newName));
+    }
 
 	public void saveMetadata() {
 		new FilesMetadata(metadataList).pushToFile();

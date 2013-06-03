@@ -3,9 +3,7 @@ package elka.clouddir.server;
 
 import elka.clouddir.server.communication.ClientCommunicationThread;
 import elka.clouddir.server.exception.LoginFailedException;
-import elka.clouddir.server.model.AbstractFileInfo;
-import elka.clouddir.server.model.User;
-import elka.clouddir.server.model.UserGroup;
+import elka.clouddir.server.model.*;
 import elka.clouddir.server.serverevents.*;
 
 import java.io.IOException;
@@ -21,10 +19,7 @@ import elka.clouddir.server.serverevents.FileChangedEvent;
 import elka.clouddir.server.serverevents.LoginRequestEvent;
 import elka.clouddir.server.serverevents.ServerEvent;
 import elka.clouddir.server.serverevents.ServerEventProcessingStrategy;
-import elka.clouddir.shared.FileControler;
-import elka.clouddir.shared.FilesMetadata;
-import elka.clouddir.shared.LoginInfo;
-import elka.clouddir.shared.Message;
+import elka.clouddir.shared.*;
 import elka.clouddir.shared.protocol.ServerResponse;
 
 /**
@@ -34,6 +29,7 @@ import elka.clouddir.shared.protocol.ServerResponse;
 public class ServerController {
 
     private static final int PORT = 3333;
+    private static final int PORT_META = 3334;
 
     private List<ClientCommunicationThread> threads;
 //    int             size;
@@ -58,14 +54,21 @@ public class ServerController {
     private List<UserGroup> userGroups = USER_GROUPS;
 
     static {
-        USER_GROUPS = new ArrayList<>();
-        UserGroup group = new UserGroup("Ludziska", "folderLudzisk");
-        USER_GROUPS.add(group);
+//        USER_GROUPS = new ArrayList<>();
+//        UserGroup group = new UserGroup("Ludziska", "folderLudzisk");
+//        USER_GROUPS.add(group);
+//
+//        USERS = new ArrayList<>();
+//        USERS.add(new User("Michal", false, group, "12345678"));
+//        USERS.add(new User("Bogdan", false, group, "10101010"));
+//        USERS.add(new User("Lukasz", false, group, "qwertyuiop"));
+        UserGroupList userGroupList = new UserGroupList();
+        userGroupList.pullFromFile();
+        UserList userList = new UserList();
+        userList.pullFromFile();
 
-        USERS = new ArrayList<>();
-        USERS.add(new User("Michal", false, group, "12345678"));
-        USERS.add(new User("Bogdan", false, group, "10101010"));
-        USERS.add(new User("Lukasz", false, group, "qwertyuiop"));
+        USER_GROUPS = userGroupList.getGroups();
+        USERS = userList.getUsers();
     }
 
     boolean         running;
@@ -115,6 +118,7 @@ public class ServerController {
      * @throws IOException
      */
     private void connectClient(Socket clientSocket) throws IOException{
+            if(threads.size() > MAX_CLIENTS) throw new IOException();
             ClientCommunicationThread newThread = new ClientCommunicationThread(clientSocket, serverEventQueue);
             threads.add(newThread);
             newThread.start();
@@ -213,7 +217,7 @@ public class ServerController {
                     filePathChangedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     filePathChangedEvent.getSenderThread().sendObject(new ServerResponse("File renamed to: " + meta.getRelativePath()));
                     //send further
-                    propagateMessage(filePathChangedEvent.getSenderThread(), Message.FILEPATH_CHANGED, meta);
+                    propagateMessage(filePathChangedEvent.getSenderThread(), Message.FILEPATH_CHANGED, filePathChangedEvent.getRenameInfo());
                 } else {
                     System.out.println("Trying to change the path of the non-existent file: " + filePathChangedEvent.getRenameInfo().getOldPath());
                     filePathChangedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
@@ -232,7 +236,7 @@ public class ServerController {
                     fileDeletedEvent.getSenderThread().sendObject(Message.SERVER_RESPONSE);
                     fileDeletedEvent.getSenderThread().sendObject(new ServerResponse("File deleted: " + meta.getRelativePath()));
                     //send further
-                    propagateMessage(fileDeletedEvent.getSenderThread(), Message.FILE_CHANGED, meta);
+                    propagateMessage(fileDeletedEvent.getSenderThread(), Message.FILE_DELETED, meta);
                 } else {
                     fileDeletedEvent.getSenderThread().sendObject(Message.INTERNAL_SERVER_ERROR);
                     System.out.println("Error: deleted file doesn't exist: " + fileDeletedEvent.getMetadata().getRelativePath());
@@ -243,6 +247,13 @@ public class ServerController {
             @Override
             public void process(ServerEvent event) throws Exception {
                 //TODO
+            }
+        });
+        procMap.put(ClientDisconnectedEvent.class, new ServerEventProcessingStrategy() {
+            @Override
+            public void process(ServerEvent event) throws Exception {
+                threads.remove(((ClientDisconnectedEvent)event).getSenderThread());
+                System.out.println("Client thread removed");
             }
         });
 //        procMap.put(FileTransferEvent.class, new ServerEventProcessingStrategy() {

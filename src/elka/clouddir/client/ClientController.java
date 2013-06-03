@@ -251,8 +251,10 @@ public class ClientController {
 //				localFileSystemListener.printMetadata();
 				
 			} catch (IOException e) {
+//                e.printStackTrace();
 				// TODO Auto-generated catch block
 			} catch (MetadataNotFound e) {
+//                System.out.println(e.getMessage());
 			}
 			localFileSystem.saveMetadata();
 		}
@@ -338,6 +340,8 @@ public class ClientController {
 
         @Override
         void perform(ClientEvent clientEvent) {
+            localFileSystem.removeWatch();
+
         	FileChangedOnServerEvent fileChangedOnServerEvent = (FileChangedOnServerEvent) clientEvent;
         	AbstractFileInfo metadata = fileChangedOnServerEvent.getMetadata();
 
@@ -350,6 +354,10 @@ public class ClientController {
     			localFileSystem.addFile(metadata, fileChangedOnServerEvent.getData());
     		}
     		localFileSystem.saveMetadata();
+
+            System.out.println("Updated from server: downloaded:" + metadata.getRelativePath());
+
+            localFileSystem.addWatch();
         }
     }
     
@@ -357,6 +365,8 @@ public class ClientController {
 
         @Override
         void perform(ClientEvent clientEvent) {
+            localFileSystem.removeWatch();
+
         	FileDeletedOnServerEvent fileDeletedOnServerEvent = (FileDeletedOnServerEvent) clientEvent;
         	AbstractFileInfo metadata = fileDeletedOnServerEvent.getMetadata();
 
@@ -368,6 +378,10 @@ public class ClientController {
     			System.out.println("[System:] Deleted file doesn't exist");
     		}
     		localFileSystem.saveMetadata();
+
+            System.out.println("Update from server: deleted: " + metadata.getRelativePath());
+
+            localFileSystem.addWatch();
         }
     }
     
@@ -375,15 +389,22 @@ public class ClientController {
 
         @Override
         void perform(ClientEvent clientEvent) {
+            localFileSystem.removeWatch();
+
         	FilePathChangedOnServerEvent pathChangedOnServerEvent = (FilePathChangedOnServerEvent) clientEvent;
             AbstractFileInfo meta = localFileSystem.findFileByName(pathChangedOnServerEvent.getRenameInfo().getOldPath());
             if(meta != null) {
                 meta.setRelativePath(pathChangedOnServerEvent.getRenameInfo().getNewPath());
-                //TODO rename the physical file
+
+                localFileSystem.renameFile(pathChangedOnServerEvent.getRenameInfo().getOldPath(), pathChangedOnServerEvent.getRenameInfo().getNewPath());
             } else {
                 System.out.println("[System:] Trying to change the path of the non-existent file");
             }
             localFileSystem.saveMetadata();
+
+            System.out.println("Update from server: path changed: " + meta.getRelativePath());
+
+            localFileSystem.addWatch();
         }
     }
 

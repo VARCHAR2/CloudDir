@@ -69,7 +69,10 @@ public class ClientCommunicationThread extends Thread
             out.close();
             user.setLoggedIn(false);
             user = null;
+            serverEventQueue.put(new ClientDisconnectedEvent(this));
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
